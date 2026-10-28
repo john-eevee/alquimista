@@ -48,6 +48,7 @@
         <lang.commenter language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirCommenter"/>
         <lang.braceMatcher language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirBraceMatcher"/>
         <lang.foldingBuilder language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirFoldingBuilder"/>
+        <lineIndentProvider implementation="dev.yaee.expert.lang.ElixirLineIndentProvider"/>
         <formattingService implementation="dev.yaee.expert.lang.MixFormattingService" order="first"/>
         <externalAnnotator language="Elixir" implementationClass="dev.yaee.expert.credo.CredoExternalAnnotator"/>
         <fileType name="Elixir"
