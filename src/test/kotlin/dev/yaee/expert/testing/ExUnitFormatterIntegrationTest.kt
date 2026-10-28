@@ -88,9 +88,11 @@ end
         assertTrue(group, group.contains("test group second"))
         assertFalse(group, group.contains("test outside"))
         assertFalse(group, group.contains("test other module"))
+        assertFalse(group, group.contains("testSuiteStarted name='OtherTest'"))
         val module = run(ExUnitRunSelection(path, null, "FirstTest"), "module-output.txt")
         assertTrue(module, module.contains("test outside"))
         assertFalse(module, module.contains("test other module"))
+        assertFalse(module, module.contains("testSuiteStarted name='OtherTest'"))
     }
 
     @Test

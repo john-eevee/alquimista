@@ -1,30 +1,31 @@
 defmodule Yaee.ExUnitFormatter do
   use GenServer
 
-  def init(_options), do: {:ok, MapSet.new()}
+  def init(_options), do: {:ok, %{tests: MapSet.new(), suites: MapSet.new()}}
 
-  def handle_cast({:module_started, test_module}, started) do
-    emit("testSuiteStarted", name: inspect(test_module.name), flowId: inspect(test_module.name))
-    {:noreply, started}
-  end
+  def handle_cast({:module_started, _test_module}, state), do: {:noreply, state}
 
-  def handle_cast({:module_finished, test_module}, started) do
-    emit("testSuiteFinished", name: inspect(test_module.name), flowId: inspect(test_module.name))
-    {:noreply, started}
+  def handle_cast({:module_finished, test_module}, state) do
+    if MapSet.member?(state.suites, test_module.name) do
+      emit("testSuiteFinished", name: inspect(test_module.name), flowId: inspect(test_module.name))
+    end
+    {:noreply, %{state | suites: MapSet.delete(state.suites, test_module.name)}}
   end
 
   def handle_cast({:test_started, %{state: {:excluded, _}}}, started), do: {:noreply, started}
 
   def handle_cast({:test_started, test}, started) do
+    started = ensure_suite(test, started)
     start_test(test)
-    {:noreply, MapSet.put(started, test_id(test))}
+    {:noreply, %{started | tests: MapSet.put(started.tests, test_id(test))}}
   end
 
   def handle_cast({:test_finished, %{state: {:excluded, _}}}, started), do: {:noreply, started}
 
   def handle_cast({:test_finished, test}, started) do
+    started = ensure_suite(test, started)
     id = test_id(test)
-    unless MapSet.member?(started, id), do: start_test(test)
+    unless MapSet.member?(started.tests, id), do: start_test(test)
 
     common = [name: to_string(test.name), flowId: inspect(test.module)]
     case test.state do
@@ -37,12 +38,21 @@ defmodule Yaee.ExUnitFormatter do
       _ -> :ok
     end
     emit("testFinished", common ++ [duration: div(test.time || 0, 1_000)])
-    {:noreply, MapSet.delete(started, id)}
+    {:noreply, %{started | tests: MapSet.delete(started.tests, id)}}
   end
 
   def handle_cast(_event, started), do: {:noreply, started}
 
   defp test_id(test), do: {test.module, test.name, Map.get(test, :parameters)}
+
+  defp ensure_suite(test, state) do
+    if MapSet.member?(state.suites, test.module) do
+      state
+    else
+      emit("testSuiteStarted", name: inspect(test.module), flowId: inspect(test.module))
+      %{state | suites: MapSet.put(state.suites, test.module)}
+    end
+  end
 
   defp format_failures(failures), do: Enum.map_join(failures, "\n", fn {kind, reason, stack} -> Exception.format(kind, reason, stack) end)
 
