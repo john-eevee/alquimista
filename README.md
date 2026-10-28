@@ -1,53 +1,60 @@
 # Alquimista
 
-Alquimista brings Elixir support to IntelliJ-based IDEs. It uses the [Expert language server](https://github.com/expert-lsp/expert) as its language engine and complements it with IntelliJ features such as test gutters, Mix actions, project creation, SDK configuration, and editor templates.
+<img src="docs/alquimista-logo.png" alt="Alquimista, an alchemist brewing a glowing purple potion" width="280">
+
+Elixir support for IntelliJ-based IDEs, powered by the [Expert language server](https://github.com/expert-lsp/expert). Alquimista combines Expert's language intelligence with IntelliJ editor, project, and test runner features.
+
+## Features
+
+### Editing
+
+- Native Elixir highlighting for keywords, macros, modules, functions, and other syntax, with colors inherited from the active theme.
+- A native HEEx highlighter for markup, components, and embedded Elixir; EEx highlighting uses TextMate. Configure Elixir and HEEx colors separately under **Settings | Editor | Color Scheme**.
+- Elixir comments, matching brackets, indentation, folding, and Complete Current Statement for delimiters and `do` blocks.
+- Elixir live templates and postfix templates for common expressions.
+- Theme-aware file icons and **New | Elixir File** templates for `.ex`, `.exs`, `.eex`, and `.heex` files.
+
+### Language intelligence
+
+- Expert supplies completion, hover documentation, diagnostics, navigation, references, symbols, formatting, code actions, and code lenses through IntelliJ's LSP integration. Available behavior depends on the installed Expert release.
+- Expert quick fixes, refactorings, source actions, and the `Reindex` command are available through IntelliJ.
+- Optional Credo diagnostics appear in the editor and the Problems window for saved Elixir files.
+
+### Projects and tests
+
+- Run ExUnit tests, `describe` groups, or modules from the gutter. Results appear in the test runner with failure navigation and an action to rerun failed tests.
+- Create a starter Mix project and register an Elixir SDK in the IDE.
+- Use **Tools | Elixir** to run Mix tests, format the project, or fetch dependencies. Editor formatting uses Expert's LSP formatter.
+
+## Requirements and setup
+
+- An IntelliJ-based IDE with LSP support, version 2026.2 or newer.
+- Elixir and Erlang/OTP, installed directly or managed with mise.
+- Expert on `PATH`, a configured Expert executable, or an internet connection for automatic download.
+
+Open a Mix project and select an Elixir project SDK to use its `mix` executable for Credo, Mix actions, and ExUnit runs. Without one, Alquimista uses mise when available, otherwise `mix` from `PATH`. When mise is available, Expert and Mix commands run through `mise exec` and use project versions from `mise.toml`.
+
+Set a custom Expert executable under **Settings | Languages & Frameworks | Elixir Expert**. If no executable is configured and Expert cannot start, Alquimista downloads the latest stable release for the current OS and architecture and checks it against the release SHA-256 manifest.
+
+### Credo
+
+Credo is disabled by default. Add it to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Alquimista checks and caches whether Credo is available, and analyzes saved `.ex` and `.exs` files.
 
 ## Upgrading from the previous plugin
 
 Alquimista has a new plugin ID. Uninstall the previous version before installing it to avoid loading both plugins. Expert and Credo settings, saved ExUnit run configurations, and custom Elixir and HEEx colors use new identifiers and need to be configured again.
 
-## Requirements
+## Development
 
-- IntelliJ-based IDE 2026.2 or newer
-- Elixir and Erlang/OTP, installed directly or managed by mise
-- Expert is downloaded automatically from the latest stable GitHub release when the server first fails to start and no custom executable is configured
-
-Expert downloads are selected for the current OS and architecture and checked against the release SHA-256 manifest. The executable path can be set under **Settings | Languages & Frameworks | Elixir Expert**. When mise is available, the plugin launches Expert and Mix commands through `mise exec`, so project versions from `mise.toml` are used.
-
-## Features
-
-- Expert LSP completion, hover documentation, diagnostics, go to definition, find references, document formatting, symbols, code actions, and code lenses
-- Expert quick fixes, refactorings, source actions, and the `Reindex` command
-- ExUnit gutter actions for tests, `describe` groups, and modules, with results in the test runner, failure navigation, and rerunning failed tests
-- Tools | Elixir actions for running all Mix tests, formatting the project, and fetching dependencies
-- A Mix project wizard that creates a starter application and ExUnit test
-- A New | Elixir File action for source, script, EEx, and HEEx files
-- An Elixir SDK type for registering an Elixir executable or installation directory
-- Native Elixir and HEEx syntax highlighting using the active color scheme, plus a TextMate grammar for EEx
-- Live templates for functions, `case`, `with`, pipelines, ExUnit tests, and module docs
-- Postfix templates for `.inspect`, `.dbg`, `.ok`, `.error`, `.pipe`, and `.if`
-- Optional Credo warnings in the editor and the Problems window for saved Elixir files
-
-LSP features are presented by the IntelliJ Platform. The available behavior follows the capabilities advertised by the installed Expert release.
-Editor formatting uses Expert's LSP formatter; the separate **Tools | Elixir | Run Mix Format** action formats the project with Mix.
-
-## Credo and Mix
-
-Credo is disabled by default. Add Credo to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Alquimista checks the active Mix project's dependencies before running Credo, and caches the result until the project configuration changes. Credo analyzes saved `.ex` and `.exs` files; its warnings appear in the editor and the Problems window's current-file view.
-
-Select an Elixir SDK as the project SDK to use its `mix` executable for Credo, Mix actions, and ExUnit gutter runs. Without an Elixir project SDK, Alquimista uses mise when available, otherwise `mix` from `PATH`.
-
-## Build and verify
+Use the Gradle wrapper to build and test the plugin:
 
 ```shell
-./gradlew test
-./gradlew verifyPlugin
+./gradlew check          # Compile and run tests
+./gradlew buildPlugin    # Build the distributable ZIP in build/distributions
+./gradlew runIde         # Launch a development IDE with the plugin installed
+./gradlew verifyPlugin   # Check compatibility with configured IntelliJ versions
 ```
 
-Run the plugin in a development IDE with:
+The Expert live-diagnostics integration test can run against a local Expert executable by setting `ALQUIMISTA_EXPERT_TEST_EXECUTABLE` to its path. The Credo process integration test requires `ALQUIMISTA_CREDO_FIXTURE` to point to a Mix project with Credo installed. These tests are skipped when their respective variables are unset.
 
-```shell
-./gradlew runIde
-```
-
-TextMate grammars are derived from [thiagopromano/explore](https://github.com/thiagopromano/explore) and remain under Apache-2.0; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+The bundled TextMate grammars are derived from [thiagopromano/explore](https://github.com/thiagopromano/explore) and remain under Apache-2.0; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
