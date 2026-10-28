@@ -101,7 +101,9 @@ private class ExUnitRunState(environment: ExecutionEnvironment, private val conf
         val properties = object : SMTRunnerConsoleProperties(configuration, "ExUnit", executor) {
             override fun getTestLocator(): SMTestLocator = FileUrlProvider.INSTANCE
         }
-        return SMTestRunnerConnectionUtil.createConsole(properties)
+        val filter = ExUnitStacktraceFilter(configuration.project)
+        properties.addStackTraceFilter(filter)
+        return SMTestRunnerConnectionUtil.createConsole(properties).also { it.addMessageFilter(filter) }
     }
 
     private fun extractFormatter(): String {
