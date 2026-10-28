@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkType
 import org.jdom.Element
 import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
 class ElixirSdkType : SdkType("ELIXIR_SDK") {
@@ -25,12 +26,25 @@ class ElixirSdkType : SdkType("ELIXIR_SDK") {
 
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) = Unit
 
-    @Suppress("DEPRECATION")
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun suggestHomePath(): String? {
         val executableName = if (File.separatorChar == '\\') "elixir.bat" else "elixir"
-        return System.getenv("PATH").orEmpty().split(File.pathSeparator)
+        val fromPath = System.getenv("PATH").orEmpty().split(File.pathSeparator)
             .asSequence()
             .map { File(it, executableName) }
+            .firstOrNull { it.isFile && it.canExecute() }
+            ?.absolutePath
+        if (fromPath != null) return fromPath
+
+        val home = Paths.get(System.getProperty("user.home"))
+        val installRoots = listOf(
+            home.resolve(".local/share/mise/installs/elixir"),
+            home.resolve(".asdf/installs/elixir"),
+        )
+        return installRoots.asSequence()
+            .map { it.toFile() }
+            .flatMap { it.listFiles()?.asSequence() ?: emptySequence() }
+            .map { File(it, "bin/$executableName") }
             .firstOrNull { it.isFile && it.canExecute() }
             ?.absolutePath
     }

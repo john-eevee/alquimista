@@ -20,11 +20,3 @@ dependencies {
         // bundledPlugin("com.intellij.java")
     }
 }
-
-tasks {
-    prepareSandbox {
-        from("src/main/resources/textmate") {
-            into("${project.name}/textmate")
-        }
-    }
-}
