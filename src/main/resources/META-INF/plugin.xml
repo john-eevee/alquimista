@@ -44,4 +44,19 @@
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
     </extensions>
 
+    <actions>
+        <group id="ElixirExpert.ToolsMenu" text="Elixir" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="ElixirExpert.RunMixTests"
+                    class="dev.yaee.expert.testing.RunMixTestsAction"
+                    text="Run Mix Tests"/>
+            <action id="ElixirExpert.MixFormat"
+                    class="dev.yaee.expert.testing.MixFormatAction"
+                    text="Run Mix Format"/>
+            <action id="ElixirExpert.MixDepsGet"
+                    class="dev.yaee.expert.testing.MixDepsGetAction"
+                    text="Fetch Mix Dependencies"/>
+        </group>
+    </actions>
+
 </idea-plugin>
