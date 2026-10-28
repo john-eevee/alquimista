@@ -11,11 +11,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
-import dev.murek.elixirij.lang.EX_COMMENTS
-import dev.murek.elixirij.lang.EX_STRINGS
-import dev.murek.elixirij.lang.lexer.ExLexer
-import dev.murek.elixirij.lang.parser.ExParser
-import dev.murek.elixirij.lang.psi.ExTypes
+import dev.yaee.expert.grammar.EX_COMMENTS
+import dev.yaee.expert.grammar.EX_STRINGS
+import dev.yaee.expert.grammar.lexer.ExLexer
+import dev.yaee.expert.grammar.parser.ExParser
+import dev.yaee.expert.grammar.psi.ExTypes
 
 class ElixirParserDefinition : ParserDefinition {
     override fun createLexer(project: Project?): Lexer = ExLexer()

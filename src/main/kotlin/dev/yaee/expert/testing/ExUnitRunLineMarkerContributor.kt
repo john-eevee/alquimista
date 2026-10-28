@@ -5,7 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
-import dev.murek.elixirij.lang.EX_IDENTIFIER
+import dev.yaee.expert.grammar.EX_IDENTIFIER
 import java.nio.file.Paths
 
 internal class ExUnitRunLineMarkerContributor : RunLineMarkerContributor(), DumbAware {

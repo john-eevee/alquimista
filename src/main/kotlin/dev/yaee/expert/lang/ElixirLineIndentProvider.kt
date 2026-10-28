@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
 import com.intellij.psi.tree.IElementType
-import dev.murek.elixirij.lang.*
-import dev.murek.elixirij.lang.lexer.ExLexer
+import dev.yaee.expert.grammar.*
+import dev.yaee.expert.grammar.lexer.ExLexer
 
 class ElixirLineIndentProvider : LineIndentProvider, DumbAware {
     override fun isSuitableFor(language: Language?): Boolean = language?.isKindOf(ElixirLanguage.INSTANCE) == true

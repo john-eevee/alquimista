@@ -1,6 +1,6 @@
 package dev.yaee.expert.lang
 
-import dev.murek.elixirij.lang.*
+import dev.yaee.expert.grammar.*
 import com.intellij.psi.TokenType
 import org.junit.Assert.*
 import org.junit.Test

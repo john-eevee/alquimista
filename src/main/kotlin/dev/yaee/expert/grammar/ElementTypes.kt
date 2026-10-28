@@ -1,11 +1,11 @@
 @file:JvmName("ElementTypes")
 
-package dev.murek.elixirij.lang
+package dev.yaee.expert.grammar
 
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import dev.murek.elixirij.ExLanguage
+import dev.yaee.expert.grammar.ExLanguage
 
 /**
  * Custom element type for Elixir tokens.

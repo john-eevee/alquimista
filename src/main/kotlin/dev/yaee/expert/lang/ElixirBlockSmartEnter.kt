@@ -1,10 +1,10 @@
 package dev.yaee.expert.lang
 
 import com.intellij.psi.TokenType
-import dev.murek.elixirij.lang.EX_COMMENT
-import dev.murek.elixirij.lang.EX_DO
-import dev.murek.elixirij.lang.EX_EOL
-import dev.murek.elixirij.lang.lexer.ExLexer
+import dev.yaee.expert.grammar.EX_COMMENT
+import dev.yaee.expert.grammar.EX_DO
+import dev.yaee.expert.grammar.EX_EOL
+import dev.yaee.expert.grammar.lexer.ExLexer
 
 internal data class BlockCompletion(val offset: Int, val text: String, val caretOffset: Int)
 

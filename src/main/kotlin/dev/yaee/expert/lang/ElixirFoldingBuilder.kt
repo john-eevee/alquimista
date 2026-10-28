@@ -7,8 +7,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import dev.murek.elixirij.lang.EX_END
-import dev.murek.elixirij.lang.psi.ExTypes
+import dev.yaee.expert.grammar.EX_END
+import dev.yaee.expert.grammar.psi.ExTypes
 
 class ElixirFoldingBuilder : FoldingBuilderEx(), DumbAware {
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {

@@ -1,9 +1,9 @@
-package dev.murek.elixirij.lang.lexer;
+package dev.yaee.expert.grammar.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
-import static dev.murek.elixirij.lang.ElementTypes.*;
+import static dev.yaee.expert.grammar.ElementTypes.*;
 
 %%
 

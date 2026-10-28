@@ -13,8 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.StringEscapesTokenTypes
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import dev.murek.elixirij.lang.*
-import dev.murek.elixirij.lang.lexer.ExLexer
+import dev.yaee.expert.grammar.*
+import dev.yaee.expert.grammar.lexer.ExLexer
 
 class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
     override fun getHighlightingLexer(): Lexer = ElixirHighlightingLexer()

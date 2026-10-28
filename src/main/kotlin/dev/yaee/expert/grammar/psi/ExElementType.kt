@@ -1,6 +1,6 @@
-package dev.murek.elixirij.lang.psi
+package dev.yaee.expert.grammar.psi
 
 import com.intellij.psi.tree.IElementType
-import dev.murek.elixirij.ExLanguage
+import dev.yaee.expert.grammar.ExLanguage
 
 class ExElementType(debugName: String) : IElementType(debugName, ExLanguage)

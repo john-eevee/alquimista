@@ -4,7 +4,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.ParsingTestCase
 import com.intellij.psi.util.elementType
-import dev.murek.elixirij.lang.EX_IDENTIFIER
+import dev.yaee.expert.grammar.EX_IDENTIFIER
 
 class ElixirParserIntegrationTest : ParsingTestCase("", "ex", ElixirParserDefinition()) {
     override fun getTestDataPath(): String = "src/test/testData"

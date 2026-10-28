@@ -6,7 +6,7 @@ import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import dev.murek.elixirij.lang.*
+import dev.yaee.expert.grammar.*
 
 class ElixirCommenter : Commenter {
     override fun getLineCommentPrefix(): String = "#"

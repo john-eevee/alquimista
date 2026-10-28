@@ -2,7 +2,7 @@ package dev.yaee.expert.lang
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.psi.StringEscapesTokenTypes
-import dev.murek.elixirij.lang.*
+import dev.yaee.expert.grammar.*
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test

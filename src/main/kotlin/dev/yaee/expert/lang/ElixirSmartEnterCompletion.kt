@@ -1,8 +1,8 @@
 package dev.yaee.expert.lang
 
 import com.intellij.psi.tree.IElementType
-import dev.murek.elixirij.lang.*
-import dev.murek.elixirij.lang.lexer.ExLexer
+import dev.yaee.expert.grammar.*
+import dev.yaee.expert.grammar.lexer.ExLexer
 
 internal object ElixirSmartEnterCompletion {
     private data class Opening(val offset: Int, val close: IElementType, val text: String)

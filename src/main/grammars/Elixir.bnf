@@ -1,21 +1,21 @@
 {
-  parserClass="dev.murek.elixirij.lang.parser.ExParser"
-  parserUtilClass="dev.murek.elixirij.lang.parser.ExParserUtil"
+  parserClass="dev.yaee.expert.grammar.parser.ExParser"
+  parserUtilClass="dev.yaee.expert.grammar.parser.ExParserUtil"
   extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
 
   psiClassPrefix="Ex"
   psiImplClassSuffix="Impl"
-  psiPackage="dev.murek.elixirij.lang.psi"
-  psiImplPackage="dev.murek.elixirij.lang.psi.impl"
+  psiPackage="dev.yaee.expert.grammar.psi"
+  psiImplPackage="dev.yaee.expert.grammar.psi.impl"
 
-  elementTypeHolderClass="dev.murek.elixirij.lang.psi.ExTypes"
-  elementTypeClass="dev.murek.elixirij.lang.psi.ExElementType"
-  tokenTypeClass="dev.murek.elixirij.lang.psi.ExTokenType"
+  elementTypeHolderClass="dev.yaee.expert.grammar.psi.ExTypes"
+  elementTypeClass="dev.yaee.expert.grammar.psi.ExElementType"
+  tokenTypeClass="dev.yaee.expert.grammar.psi.ExTokenType"
 
   // Use tokens from ElementTypes.kt
   generate=[tokens="no"]
   parserImports=[
-    "static dev.murek.elixirij.lang.ElementTypes.*"
+    "static dev.yaee.expert.grammar.ElementTypes.*"
     "static com.intellij.psi.StringEscapesTokenTypes.*"
     "static com.intellij.lang.parser.GeneratedParserUtilBase.*"
   ]

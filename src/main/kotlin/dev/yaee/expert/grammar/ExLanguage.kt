@@ -1,4 +1,4 @@
-package dev.murek.elixirij
+package dev.yaee.expert.grammar
 
 import dev.yaee.expert.lang.ElixirLanguage
 
