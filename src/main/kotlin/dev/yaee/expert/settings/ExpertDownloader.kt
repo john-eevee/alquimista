@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.lsp.api.LspClientManager
@@ -63,8 +64,13 @@ object ExpertDownloader {
                     }
                     ApplicationManager.getApplication().invokeLater {
                         ExpertSettings.getInstance().expertPath = destination.toString()
-                        LspClientManager.getInstance(project)
-                            .stopAndRestartClientsIfNeeded(ExpertLspServerSupportProvider::class.java)
+                        (ProjectManager.getInstance().openProjects.asList() + project)
+                            .distinct()
+                            .filterNot { it.isDisposed || it.isDefault }
+                            .forEach { openProject ->
+                                LspClientManager.getInstance(openProject)
+                                    .stopAndRestartClientsIfNeeded(ExpertLspServerSupportProvider::class.java)
+                            }
                     }
                 } catch (error: Throwable) {
                     ApplicationManager.getApplication().invokeLater { onFailure?.invoke(error) }
