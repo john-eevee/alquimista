@@ -12,6 +12,12 @@ class ElixirSmartEnterProcessor : SmartEnterProcessor() {
     override fun process(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
         val document = editor.document
         val caret = editor.caretModel.offset
+        val block = ElixirBlockSmartEnter.find(document.charsSequence, caret)
+        if (block != null) {
+            document.insertString(block.offset, block.text)
+            editor.caretModel.moveToOffset(block.offset + block.caretOffset)
+            return true
+        }
         val (offset, closers) = ElixirSmartEnterCompletion.find(document.charsSequence, caret) ?: return false
         val lineEnd = document.getLineEndOffset(document.getLineNumber(caret))
         document.insertString(offset, closers)
