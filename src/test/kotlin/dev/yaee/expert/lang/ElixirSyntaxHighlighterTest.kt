@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.psi.StringEscapesTokenTypes
 import dev.murek.elixirij.lang.*
 import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ElixirSyntaxHighlighterTest {
@@ -30,5 +31,31 @@ class ElixirSyntaxHighlighterTest {
         assertArrayEquals(emptyArray(), highlighter.getTokenHighlights(EX_RAISE))
         assertArrayEquals(emptyArray(), highlighter.getTokenHighlights(EX_SEND))
         assertArrayEquals(emptyArray(), highlighter.getTokenHighlights(EX_THROW))
+    }
+
+    @Test
+    fun `highlights Elixir declarations and control macros as theme keywords`() {
+        val words = listOf("def", "defp", "defmodule", "defmacro", "defcustom", "case", "with", "if", "unless", "cond", "for", "receive", "try", "quote", "use", "alias", "import", "require")
+        val source = words.joinToString(" ")
+        val lexer = highlighter.highlightingLexer
+        lexer.start(source)
+        val highlighted = mutableListOf<String>()
+        while (lexer.tokenType != null) {
+            if (highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD)) {
+                highlighted += source.substring(lexer.tokenStart, lexer.tokenEnd)
+            }
+            lexer.advance()
+        }
+        assertEquals(words, highlighted)
+    }
+
+    @Test
+    fun `does not color keyword list keys as control constructs`() {
+        val lexer = highlighter.highlightingLexer
+        lexer.start("case: value, with: value, defmodule: value")
+        while (lexer.tokenType != null) {
+            assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD))
+            lexer.advance()
+        }
     }
 }

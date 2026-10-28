@@ -1,6 +1,7 @@
 package dev.yaee.expert.lang
 
 import com.intellij.lexer.Lexer
+import com.intellij.lexer.DelegateLexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Colors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -16,7 +17,7 @@ import dev.murek.elixirij.lang.*
 import dev.murek.elixirij.lang.lexer.ExLexer
 
 class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
-    override fun getHighlightingLexer(): Lexer = ExLexer()
+    override fun getHighlightingLexer(): Lexer = ElixirHighlightingLexer()
 
     override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
         val key = when {
@@ -26,6 +27,7 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
                 tokenType == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN -> Colors.INVALID_STRING_ESCAPE
             EX_COMMENTS.contains(tokenType) -> Colors.LINE_COMMENT
             tokenType == EX_RAISE || tokenType == EX_SEND || tokenType == EX_THROW -> null
+            tokenType == HIGHLIGHT_MACRO_KEYWORD -> Colors.KEYWORD
             EX_KEYWORDS.contains(tokenType) -> Colors.KEYWORD
             EX_NUMBERS.contains(tokenType) -> Colors.NUMBER
             EX_STRINGS.contains(tokenType) || tokenType == EX_SIGIL -> Colors.STRING
@@ -40,6 +42,24 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
             else -> null
         }
         return pack(key)
+    }
+}
+
+private val HIGHLIGHT_MACRO_KEYWORD = ExTokenType("HIGHLIGHT_MACRO_KEYWORD")
+
+private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
+    override fun getTokenType(): IElementType? {
+        val token = super.getTokenType()
+        if (token != EX_IDENTIFIER) return token
+        val word = bufferSequence.subSequence(tokenStart, tokenEnd).toString()
+        return if (word.startsWith("def") || word in CONTROL_MACROS) HIGHLIGHT_MACRO_KEYWORD else token
+    }
+
+    companion object {
+        private val CONTROL_MACROS = setOf(
+            "case", "with", "if", "unless", "cond", "for", "receive", "try", "quote",
+            "alias", "import", "require", "use"
+        )
     }
 }
 
