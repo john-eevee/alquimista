@@ -21,6 +21,13 @@ internal class ExpertLspServerDescriptor(project: Project) :
     override fun isSupportedFile(file: VirtualFile): Boolean =
         ElixirFileSupport.supportsExtension(file.extension.orEmpty())
 
+    override fun getLanguageId(file: VirtualFile): String = when (file.extension) {
+        "ex", "exs" -> "elixir"
+        "eex" -> "eex"
+        "heex" -> "heex"
+        else -> super.getLanguageId(file)
+    }
+
     override fun createCommandLine(): GeneralCommandLine {
         val configuredPath = ExpertSettings.getInstance().expertPath.trim()
         return MiseSupport.commandLine(configuredPath.ifEmpty { "expert" }, listOf("--stdio")).apply {
