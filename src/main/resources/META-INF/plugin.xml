@@ -43,6 +43,9 @@
                           implementationClass="dev.yaee.expert.lang.ElixirParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Elixir"
                           implementationClass="dev.yaee.expert.lang.ElixirSyntaxHighlighterFactory"/>
+        <lang.parserDefinition language="HEEx" implementationClass="dev.yaee.expert.lang.HeexParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="HEEx" implementationClass="dev.yaee.expert.lang.HeexSyntaxHighlighterFactory"/>
+        <fileType name="HEEx" language="HEEx" implementationClass="dev.yaee.expert.lang.HeexFileType" fieldName="INSTANCE" extensions="heex"/>
         <colorSettingsPage implementation="dev.yaee.expert.lang.ElixirColorSettingsPage"/>
         <colorSettingsPage implementation="dev.yaee.expert.lang.HeexColorSettingsPage"/>
         <lang.smartEnterProcessor language="Elixir"

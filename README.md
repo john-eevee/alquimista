@@ -19,7 +19,7 @@ Expert downloads are selected for the current OS and architecture and checked ag
 - A Mix project wizard that creates a starter application and ExUnit test
 - A New | Elixir File action for source, script, EEx, and HEEx files
 - An Elixir SDK type for registering an Elixir executable or installation directory
-- Native Elixir syntax highlighting using the active color scheme, plus TextMate grammars for EEx and HEEx
+- Native Elixir and HEEx syntax highlighting using the active color scheme, plus a TextMate grammar for EEx
 - Live templates for functions, `case`, `with`, pipelines, ExUnit tests, and module docs
 - Postfix templates for `.inspect`, `.dbg`, `.ok`, `.error`, `.pipe`, and `.if`
 - Optional Credo warnings in the editor and the Problems window for saved Elixir files

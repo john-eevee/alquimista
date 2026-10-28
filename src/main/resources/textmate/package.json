@@ -15,7 +15,7 @@
       {
         "id": "html-eex",
         "aliases": ["HTML (EEx)"],
-        "extensions": [".heex"]
+        "extensions": []
       }
     ],
     "grammars": [

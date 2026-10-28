@@ -17,8 +17,8 @@ class PluginExtensionRegistrationTest {
     fun `registers parser and postfix provider with platform extension points`() {
         val descriptor = javaClass.getResourceAsStream("/META-INF/plugin.xml")!!
         val document = descriptor.use { DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(it) }
-        assertEquals(1, document.getElementsByTagName("lang.parserDefinition").length)
-        assertEquals(1, document.getElementsByTagName("lang.syntaxHighlighterFactory").length)
+        assertEquals(2, document.getElementsByTagName("lang.parserDefinition").length)
+        assertEquals(2, document.getElementsByTagName("lang.syntaxHighlighterFactory").length)
         assertEquals(1, document.getElementsByTagName("lang.smartEnterProcessor").length)
         assertEquals(1, document.getElementsByTagName("codeInsight.template.postfixTemplateProvider").length)
     }

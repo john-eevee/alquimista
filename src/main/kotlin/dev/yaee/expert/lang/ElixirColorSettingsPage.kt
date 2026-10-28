@@ -1,8 +1,6 @@
 package dev.yaee.expert.lang
 
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Defaults
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.options.colors.AttributesDescriptor
 import com.intellij.openapi.options.colors.ColorDescriptor
@@ -47,35 +45,38 @@ end
 """
 }
 
-/** HEEx currently uses TextMate's shared theme keys, which also affect other TextMate languages. */
 class HeexColorSettingsPage : ColorSettingsPage {
-    override fun getDisplayName(): String = "HEEx (shared TextMate colors)"
+    override fun getDisplayName(): String = "HEEx"
     override fun getIcon(): Icon = ElixirIcons.FILE
-    override fun getHighlighter(): SyntaxHighlighter = PlainSyntaxHighlighter()
+    override fun getHighlighter(): SyntaxHighlighter = HeexSyntaxHighlighter()
     override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
+    override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = emptyMap()
     override fun getAttributeDescriptors(): Array<AttributesDescriptor> = arrayOf(
-        AttributesDescriptor("Tag punctuation", Defaults.MARKUP_TAG),
-        AttributesDescriptor("Attribute", Defaults.MARKUP_ATTRIBUTE),
-        AttributesDescriptor("Keyword", Defaults.KEYWORD),
-        AttributesDescriptor("String", Defaults.STRING),
-        AttributesDescriptor("Number", Defaults.NUMBER),
-        AttributesDescriptor("Comment", Defaults.LINE_COMMENT),
-        AttributesDescriptor("Function", Defaults.FUNCTION_CALL),
-        AttributesDescriptor("Tag name and module", Defaults.CLASS_NAME),
-        AttributesDescriptor("Embedded code", Defaults.TEMPLATE_LANGUAGE_COLOR),
+        AttributesDescriptor("Tag punctuation", HeexColors.TAG_DELIMITER),
+        AttributesDescriptor("Tag name", HeexColors.TAG_NAME),
+        AttributesDescriptor("Attribute", HeexColors.ATTRIBUTE),
+        AttributesDescriptor("String", HeexColors.STRING),
+        AttributesDescriptor("Comment", HeexColors.COMMENT),
+        AttributesDescriptor("Entity", HeexColors.ENTITY),
+        AttributesDescriptor("Expression delimiter", HeexColors.EXPRESSION_DELIMITER),
+        AttributesDescriptor("Elixir keyword and macro", HeexColors.KEYWORD),
+        AttributesDescriptor("Elixir module", HeexColors.MODULE),
+        AttributesDescriptor("Elixir function declaration", HeexColors.FUNCTION_DECLARATION),
+        AttributesDescriptor("Elixir function call", HeexColors.FUNCTION_CALL),
+        AttributesDescriptor("Elixir number", HeexColors.NUMBER),
+        AttributesDescriptor("Elixir atom and keyword key", HeexColors.ATOM),
+        AttributesDescriptor("Elixir operator", HeexColors.OPERATOR),
+        AttributesDescriptor("Elixir parentheses", HeexColors.PARENTHESES),
+        AttributesDescriptor("Elixir brackets", HeexColors.BRACKETS),
+        AttributesDescriptor("Elixir braces", HeexColors.BRACES),
+        AttributesDescriptor("Elixir comma", HeexColors.COMMA),
+        AttributesDescriptor("Elixir dot", HeexColors.DOT),
+        AttributesDescriptor("Elixir semicolon", HeexColors.SEMICOLON),
+        AttributesDescriptor("Elixir valid escape", HeexColors.VALID_ESCAPE),
+        AttributesDescriptor("Elixir invalid escape", HeexColors.INVALID_ESCAPE),
     )
-    override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = mapOf(
-        "tag" to Defaults.MARKUP_TAG,
-        "tagName" to Defaults.CLASS_NAME,
-        "attribute" to Defaults.MARKUP_ATTRIBUTE,
-        "string" to Defaults.STRING,
-        "keyword" to Defaults.KEYWORD,
-        "function" to Defaults.FUNCTION_CALL,
-        "embedded" to Defaults.TEMPLATE_LANGUAGE_COLOR,
-    )
-    override fun getDemoText(): String = """<tag><</tag><tagName>div</tagName> <attribute>class</attribute>=<string>"greeting"</string><tag>></tag>
-  <embedded><%= </embedded><keyword>if</keyword> @name <keyword>do</keyword><embedded> %></embedded>
-    <embedded><%= </embedded><function>greet</function>(@name)<embedded> %></embedded>
-  <embedded><% </embedded><keyword>end</keyword><embedded> %></embedded>
-<tag></</tag><tagName>div</tagName><tag>></tag>"""
+    override fun getDemoText(): String = """<.card :if={@visible} class="greeting">
+  Hello, {@name}!
+  <%= Enum.map(@items, fn item -> item end) %>
+</.card>"""
 }

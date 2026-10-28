@@ -13,6 +13,7 @@ class ElixirTextMateAssetsTest {
         val languages = root.getAsJsonObject("contributes").getAsJsonArray("languages")
         val extensions = languages.flatMap { it.asJsonObject.getAsJsonArray("extensions").map { ext -> ext.asString } }
 
-        assertTrue(extensions.containsAll(listOf(".ex", ".exs", ".eex", ".heex")))
+        assertTrue(extensions.containsAll(listOf(".ex", ".exs", ".eex")))
+        assertTrue("HEEx uses its native file type", !extensions.contains(".heex"))
     }
 }

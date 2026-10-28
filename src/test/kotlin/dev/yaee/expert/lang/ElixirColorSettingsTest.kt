@@ -5,7 +5,6 @@ import dev.yaee.expert.grammar.EX_ALIAS
 import dev.yaee.expert.grammar.EX_DO
 import org.junit.Assert.*
 import org.junit.Test
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateDefaultColorsProvider
 import javax.xml.parsers.DocumentBuilderFactory
 
 class ElixirColorSettingsTest {
@@ -19,16 +18,13 @@ class ElixirColorSettingsTest {
         assertTrue(keys.containsAll(listOf(ElixirColors.KEYWORD, ElixirColors.MODULE, ElixirColors.FUNCTION_DECLARATION, ElixirColors.FUNCTION_CALL)))
     }
 
-    @Test fun `HEEx settings expose the TextMate shared theme colors`() {
+    @Test fun `HEEx colors are independent and inherit theme defaults`() {
         val page = HeexColorSettingsPage()
         val keys = page.attributeDescriptors.map { it.key }.toSet()
-        assertTrue(keys.containsAll(listOf(DefaultLanguageHighlighterColors.MARKUP_TAG,
-            DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE, DefaultLanguageHighlighterColors.STRING)))
-        assertTrue(page.displayName.contains("HEEx"))
-        val textMate = TextMateDefaultColorsProvider()
-        assertEquals(DefaultLanguageHighlighterColors.MARKUP_TAG, textMate.getTextAttributesKey("punctuation.definition.tag"))
-        assertEquals(DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE, textMate.getTextAttributesKey("entity.other.attribute-name"))
-        assertEquals(DefaultLanguageHighlighterColors.STRING, textMate.getTextAttributesKey("string"))
+        assertTrue(keys.containsAll(listOf(HeexColors.TAG_NAME, HeexColors.ATTRIBUTE, HeexColors.STRING, HeexColors.KEYWORD)))
+        assertEquals("HEEx", page.displayName)
+        assertEquals(DefaultLanguageHighlighterColors.MARKUP_TAG, HeexColors.TAG_NAME.fallbackAttributeKey)
+        assertNotEquals(ElixirColors.KEYWORD, HeexColors.KEYWORD)
     }
 
     @Test fun `both color pages are registered`() {
