@@ -1,7 +1,9 @@
 package dev.yaee.expert.settings
 
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.platform.lsp.api.LspClientManager
+import dev.yaee.expert.lsp.ExpertLspServerSupportProvider
 import com.intellij.ui.components.JBLabel
 import java.awt.GridLayout
 import javax.swing.JComponent
@@ -25,7 +27,14 @@ class ExpertConfigurable : Configurable {
     override fun isModified(): Boolean = expertPath.text != ExpertSettings.getInstance().expertPath
 
     override fun apply() {
-        ExpertSettings.getInstance().expertPath = expertPath.text.trim()
+        if (ExpertSettings.getInstance().updateExpertPath(expertPath.text)) {
+            ProjectManager.getInstance().openProjects
+                .filterNot { it.isDisposed || it.isDefault }
+                .forEach { project ->
+                    LspClientManager.getInstance(project)
+                        .stopAndRestartClientsIfNeeded(ExpertLspServerSupportProvider::class.java)
+                }
+        }
     }
 
     override fun reset() {

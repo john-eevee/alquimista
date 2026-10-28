@@ -19,8 +19,14 @@ class ExpertSettings : PersistentStateComponent<ExpertSettings.State> {
     var expertPath: String
         get() = persistedState.expertPath
         set(value) {
-            persistedState.expertPath = value
+            persistedState.expertPath = ExpertPathChange.normalize(value)
         }
+
+    fun updateExpertPath(value: String): Boolean {
+        if (!ExpertPathChange.hasChanged(expertPath, value)) return false
+        expertPath = value
+        return true
+    }
 
     var minimumWorkspaceSymbolQueryLength: Int
         get() = persistedState.minimumWorkspaceSymbolQueryLength
@@ -40,4 +46,10 @@ class ExpertSettings : PersistentStateComponent<ExpertSettings.State> {
         fun getInstance(): ExpertSettings =
             ApplicationManager.getApplication().getService(ExpertSettings::class.java)
     }
+}
+
+object ExpertPathChange {
+    fun normalize(path: String): String = path.trim()
+
+    fun hasChanged(current: String, proposed: String): Boolean = normalize(current) != normalize(proposed)
 }
