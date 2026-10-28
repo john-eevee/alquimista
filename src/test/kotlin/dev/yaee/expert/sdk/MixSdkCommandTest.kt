@@ -2,6 +2,7 @@ package dev.yaee.expert.sdk
 
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.Assume.assumeTrue
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -40,6 +41,23 @@ class MixSdkCommandTest {
         assertEquals(mix.toString(), command.executable)
         assertEquals(listOf("test"), command.arguments)
         assertEquals("${bin}${java.io.File.pathSeparator}/other/bin", command.path)
+    }
+
+    @Test
+    fun `selected SDK mix runs using its sibling elixir`() {
+        assumeTrue(java.io.File.separatorChar != '\\')
+        val root = temporaryDirectory("mix-sdk-execute")
+        val bin = Files.createDirectories(root.resolve("bin"))
+        val elixir = Files.writeString(bin.resolve("elixir"), "#!/bin/sh\nprintf selected-sdk\n").toFile()
+        val mix = Files.writeString(bin.resolve("mix"), "#!/bin/sh\nelixir\n").toFile()
+        assertTrue(elixir.setExecutable(true))
+        assertTrue(mix.setExecutable(true))
+        val command = MixSdkCommand.forSdk(root.toString(), listOf("test"), System.getenv("PATH").orEmpty(), false)
+        val process = ProcessBuilder(listOf(command.executable) + command.arguments).apply {
+            environment()["PATH"] = command.path
+        }.start()
+        assertEquals("selected-sdk", process.inputStream.bufferedReader().readText())
+        assertEquals(0, process.waitFor())
     }
 
     private fun temporaryDirectory(prefix: String) =
