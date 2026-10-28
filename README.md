@@ -17,6 +17,7 @@ Expert downloads are selected for the current OS and architecture and checked ag
 - ExUnit test discovery and gutter actions that run `mix test path/to/file_test.exs:line`
 - Tools | Elixir actions for running all Mix tests, formatting the project, and fetching dependencies
 - A Mix project wizard that creates a starter application and ExUnit test
+- A New | Elixir File action for source, script, EEx, and HEEx files
 - An Elixir SDK type for registering an Elixir executable or installation directory
 - Native Elixir syntax highlighting using the active color scheme, plus TextMate grammars for EEx and HEEx
 - Live templates for functions, `case`, `with`, pipelines, ExUnit tests, and module docs

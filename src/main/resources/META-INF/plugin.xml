@@ -56,6 +56,12 @@
     </extensions>
 
     <actions>
+        <action id="ElixirExpert.NewFile"
+                class="dev.yaee.expert.project.CreateElixirFileAction"
+                text="Elixir File"
+                description="Create an Elixir source, script, or template file">
+            <add-to-group group-id="NewGroup" anchor="last"/>
+        </action>
         <group id="ElixirExpert.ToolsMenu" text="Elixir" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="ElixirExpert.RunMixTests"
