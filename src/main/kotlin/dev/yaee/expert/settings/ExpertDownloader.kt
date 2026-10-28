@@ -8,7 +8,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspClientManager
 import dev.yaee.expert.lsp.ExpertLspServerSupportProvider
 import java.io.File
 import java.net.HttpURLConnection
@@ -63,8 +63,8 @@ object ExpertDownloader {
                     }
                     ApplicationManager.getApplication().invokeLater {
                         ExpertSettings.getInstance().expertPath = destination.toString()
-                        LspServerManager.getInstance(project)
-                            .stopAndRestartIfNeeded(ExpertLspServerSupportProvider::class.java)
+                        LspClientManager.getInstance(project)
+                            .stopAndRestartClientsIfNeeded(ExpertLspServerSupportProvider::class.java)
                     }
                 } catch (error: Throwable) {
                     ApplicationManager.getApplication().invokeLater { onFailure?.invoke(error) }

@@ -30,7 +30,7 @@
                 instance="dev.yaee.expert.settings.ExpertConfigurable"
                 id="dev.yaee.expert.settings.ExpertConfigurable"
                 displayName="Elixir Expert"/>
-        <platform.lsp.serverSupportProvider
+        <platform.lsp.integrationProvider
                 implementation="dev.yaee.expert.lsp.ExpertLspServerSupportProvider"/>
         <parserDefinition language="Elixir"
                           implementationClass="dev.yaee.expert.lang.ElixirParserDefinition"/>

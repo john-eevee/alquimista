@@ -5,18 +5,18 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
 import dev.yaee.expert.settings.ExpertDownloader
 import dev.yaee.expert.settings.MiseSupport
 import dev.yaee.expert.settings.ExpertSettings
 
 internal class ExpertLspServerDescriptor(project: Project) :
-    ProjectWideLspServerDescriptor(project, "Expert") {
+    ProjectWideLspClientDescriptor(project, "Expert") {
 
     override fun isSupportedFile(file: VirtualFile): Boolean =
         ElixirFileSupport.supportsExtension(file.extension.orEmpty())
@@ -28,7 +28,7 @@ internal class ExpertLspServerDescriptor(project: Project) :
         }
     }
 
-    override fun startServerProcess(): OSProcessHandler {
+    override fun startServerProcess(): BaseProcessHandler<*> {
         try {
             return super.startServerProcess()
         } catch (error: ExecutionException) {
