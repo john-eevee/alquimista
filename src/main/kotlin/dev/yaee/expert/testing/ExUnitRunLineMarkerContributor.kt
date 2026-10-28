@@ -5,12 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
-import dev.yaee.expert.lang.ElixirLineToken
+import dev.murek.elixirij.lang.EX_IDENTIFIER
 import java.nio.file.Paths
 
 internal class ExUnitRunLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
     override fun getInfo(element: PsiElement): Info? {
-        if (element.elementType != ElixirLineToken) return null
+        if (element.elementType != EX_IDENTIFIER || element.text !in setOf("test", "property")) return null
         val project = element.project
         val projectRoot = project.basePath ?: return null
         val virtualFile = element.containingFile.virtualFile ?: return null

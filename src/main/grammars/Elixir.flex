@@ -1,0 +1,778 @@
+package dev.murek.elixirij.lang.lexer;
+
+import com.intellij.lexer.FlexLexer;
+import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
+import static dev.murek.elixirij.lang.ElementTypes.*;
+
+%%
+
+%{
+    private int interpolationBalance = 0;
+    private int interpolationReturnState = YYINITIAL;
+    private int stringReturnState = YYINITIAL;
+    private int[] interpolationStateStack = new int[8];
+    private int[] interpolationBalanceStack = new int[8];
+    private int interpolationStackTop = 0;
+    private int[] stringStateStack = new int[8];
+    private int stringStackTop = 0;
+    private char sigilLetter = 0;
+
+    public _ExLexer() {
+        this((java.io.Reader)null);
+    }
+
+    private IElementType beginInterpolation(int returnState) {
+        if (interpolationBalance > 0) {
+            if (interpolationStackTop == interpolationStateStack.length) {
+                int newSize = interpolationStateStack.length * 2;
+                int[] newStateStack = new int[newSize];
+                int[] newBalanceStack = new int[newSize];
+                System.arraycopy(interpolationStateStack, 0, newStateStack, 0, interpolationStateStack.length);
+                System.arraycopy(interpolationBalanceStack, 0, newBalanceStack, 0, interpolationBalanceStack.length);
+                interpolationStateStack = newStateStack;
+                interpolationBalanceStack = newBalanceStack;
+            }
+            interpolationStateStack[interpolationStackTop] = interpolationReturnState;
+            interpolationBalanceStack[interpolationStackTop] = interpolationBalance;
+            interpolationStackTop++;
+        }
+        interpolationBalance = 1;
+        interpolationReturnState = returnState;
+        yybegin(IN_INTERPOLATION);
+        return EX_INTERPOLATION_START;
+    }
+
+    private IElementType beginSigil(int state) {
+        pushStringReturnState();
+        sigilLetter = yytext().charAt(1);
+        stringReturnState = yystate();
+        yybegin(state);
+        return EX_STRING_BEGIN;
+    }
+
+    private IElementType beginString(int state, IElementType tokenType) {
+        pushStringReturnState();
+        stringReturnState = yystate();
+        yybegin(state);
+        return tokenType;
+    }
+
+    private IElementType endString(IElementType tokenType) {
+        int returnState = stringReturnState;
+        if (stringStackTop > 0) {
+            stringStackTop--;
+            stringReturnState = stringStateStack[stringStackTop];
+        } else {
+            stringReturnState = YYINITIAL;
+        }
+        yybegin(returnState);
+        return tokenType;
+    }
+
+    private void pushStringReturnState() {
+        if (stringStackTop == stringStateStack.length) {
+            int newSize = stringStateStack.length * 2;
+            int[] newStateStack = new int[newSize];
+            System.arraycopy(stringStateStack, 0, newStateStack, 0, stringStateStack.length);
+            stringStateStack = newStateStack;
+        }
+        stringStateStack[stringStackTop] = stringReturnState;
+        stringStackTop++;
+    }
+
+    private boolean sigilAllowsEscapes() {
+        return sigilLetter == 's' || sigilLetter == 'c';
+    }
+%}
+
+%public
+%class _ExLexer
+%implements FlexLexer
+%function advance
+%type IElementType
+%unicode
+%state IN_STRING IN_HEREDOC IN_CHARLIST IN_CHARLIST_HEREDOC IN_INTERPOLATION
+%state IN_SIGIL_PAREN IN_SIGIL_BRACKET IN_SIGIL_BRACE IN_SIGIL_ANGLE IN_SIGIL_SLASH IN_SIGIL_PIPE IN_SIGIL_DQUOTE IN_SIGIL_SQUOTE
+%state IN_SIGIL_HEREDOC_DQUOTE IN_SIGIL_HEREDOC_SQUOTE
+
+// Whitespace
+HORIZONTAL_SPACE=[ \t\f]
+EOL_CHAR=\r\n|\r|\n
+
+// Numbers
+DIGIT=[0-9]
+DIGITS={DIGIT}(_?{DIGIT})*
+HEX_DIGIT=[0-9a-fA-F]
+HEX_DIGITS={HEX_DIGIT}(_?{HEX_DIGIT})*
+UNICODE_SHORT=\\u{HEX_DIGIT}{4}
+UNICODE_BRACED=\\u\{{HEX_DIGIT}{1,6}\}
+HEX_ESC=\\x{HEX_DIGIT}{2}
+HEX_ESC_SHORT=\\x{HEX_DIGIT}
+HEX_ESC_BRACED=\\x\{{HEX_DIGIT}{1,6}\}
+SIMPLE_ESC=\\[0abdefnrstv\\\"']
+ESCAPED_NEWLINE=\\{EOL_CHAR}
+GENERIC_ESC=\\[^\r\n]
+OCTAL_DIGIT=[0-7]
+OCTAL_DIGITS={OCTAL_DIGIT}(_?{OCTAL_DIGIT})*
+BIN_DIGIT=[01]
+BIN_DIGITS={BIN_DIGIT}(_?{BIN_DIGIT})*
+
+DEC_INT={DIGITS}
+HEX_INT=0[xX]{HEX_DIGITS}
+OCTAL_INT=0[oO]{OCTAL_DIGITS}
+BIN_INT=0[bB]{BIN_DIGITS}
+INTEGER={DEC_INT}|{HEX_INT}|{OCTAL_INT}|{BIN_INT}
+
+EXPONENT=[eE][+-]?{DIGITS}
+FLOAT_LITERAL={DIGITS}\.{DIGITS}{EXPONENT}?|{DIGITS}{EXPONENT}
+
+// Identifiers
+LOWERCASE=[a-z_]
+UPPERCASE=[A-Z]
+ALNUM=[a-zA-Z0-9_]
+IDENTIFIER_TAIL={ALNUM}*[!?]?
+
+IDENTIFIER={LOWERCASE}{IDENTIFIER_TAIL}
+ALIAS={UPPERCASE}{ALNUM}*
+
+// Atoms
+ATOM_TAIL=({ALNUM}|@)*
+ATOM_HEAD={LOWERCASE}{ATOM_TAIL}[!?]?
+
+// Comments
+COMMENT=#[^\r\n]*
+
+// Sigil prefixes
+SIGIL_START_INTERP=\~[a-z]
+SIGIL_START_NO_INTERP=\~[A-Z]
+SIGIL_MODIFIERS=[a-zA-Z]*
+ESCAPED_SLASH=\\\/
+SIGIL_SLASH_CONTENT=({ESCAPED_SLASH}|[^/])*
+
+// Interpolation (simplified - deprecated patterns)
+
+%%
+
+<IN_INTERPOLATION> {
+    "%{"                               { interpolationBalance++; return EX_PERCENT_LBRACE; }
+    "}"                                {
+                                          interpolationBalance--;
+                                          if (interpolationBalance == 0) {
+                                              int returnState = interpolationReturnState;
+                                              if (interpolationStackTop > 0) {
+                                                  interpolationStackTop--;
+                                                  interpolationReturnState = interpolationStateStack[interpolationStackTop];
+                                                  interpolationBalance = interpolationBalanceStack[interpolationStackTop];
+                                              }
+                                              yybegin(returnState);
+                                              return EX_INTERPOLATION_END;
+                                          }
+                                          return EX_RBRACE;
+                                      }
+    "{"                                { interpolationBalance++; return EX_LBRACE; }
+}
+
+<YYINITIAL, IN_INTERPOLATION> {
+    // Whitespace
+    {HORIZONTAL_SPACE}+                { return WHITE_SPACE; }
+    {EOL_CHAR}                         { return EX_EOL; }
+
+    // Comments
+    {COMMENT}                          { return EX_COMMENT; }
+
+    // Keywords (must come before identifiers)
+    "true"                             { return EX_TRUE; }
+    "false"                            { return EX_FALSE; }
+    "nil"                              { return EX_NIL; }
+    "do"                               { return EX_DO; }
+    "end"                              { return EX_END; }
+    "fn"                               { return EX_FN; }
+    "raise"                            { return EX_RAISE; }
+    "throw"                            { return EX_THROW; }
+    "send"                             { return EX_SEND; }
+    "super"                            { return EX_SUPER; }
+    "after"                            { return EX_AFTER; }
+    "else"                             { return EX_ELSE; }
+    "catch"                            { return EX_CATCH; }
+    "rescue"                           { return EX_RESCUE; }
+    "when"                             { return EX_WHEN; }
+    "in"                               { return EX_IN; }
+    "not"                              { return EX_NOT; }
+    "and"                              { return EX_AND; }
+    "or"                               { return EX_OR; }
+
+    // Three-character operators (must come before two-character)
+    "==="                              { return EX_EQ_EQ_EQ; }
+    "!=="                              { return EX_NOT_EQ_EQ; }
+    "<~>"                              { return EX_LT_TILDE_GT; }
+    "<<~"                              { return EX_LT_LT_TILDE; }
+    "~>>"                              { return EX_TILDE_GT_GT; }
+    "<<<"                              { return EX_LT_LT_LT; }
+    ">>>"                              { return EX_GT_GT_GT; }
+    "<|>"                              { return EX_LT_PIPE_GT; }
+    "..."                              { return EX_DOT_DOT_DOT; }
+    "+++"                              { return EX_PLUS_PLUS_PLUS; }
+    "---"                              { return EX_MINUS_MINUS_MINUS; }
+    "&&&"                              { return EX_AMP_AMP_AMP; }
+    "|||"                              { return EX_PIPE_PIPE_PIPE; }
+    "..//"                             { return EX_DOT_DOT_SLASH_SLASH; }
+
+    // Two-character operators
+    "=="                               { return EX_EQ_EQ; }
+    "!="                               { return EX_NOT_EQ; }
+    "<="                               { return EX_LT_EQ; }
+    ">="                               { return EX_GT_EQ; }
+    "=~"                               { return EX_EQ_TILDE; }
+    "&&"                               { return EX_AMP_AMP; }
+    "||"                               { return EX_PIPE_PIPE; }
+    "->"                               { return EX_ARROW; }
+    "<-"                               { return EX_LEFT_ARROW; }
+    "=>"                               { return EX_FAT_ARROW; }
+    "|>"                               { return EX_PIPE_GT; }
+    "<~"                               { return EX_LT_TILDE; }
+    "~>"                               { return EX_TILDE_GT; }
+    ".."                               { return EX_DOT_DOT; }
+    "++"                               { return EX_PLUS_PLUS; }
+    "--"                               { return EX_MINUS_MINUS; }
+    "<>"                               { return EX_LT_GT; }
+    "**"                               { return EX_STAR_STAR; }
+    "::"                               { return EX_COLON_COLON; }
+    "\\\\"                             { return EX_BACK_SLASH_BACK_SLASH; }
+    "//"                               { return EX_SLASH_SLASH; }
+    "<<"                               { return EX_LT_LT; }
+    ">>"                               { return EX_GT_GT; }
+    "%{"                               { return EX_PERCENT_LBRACE; }
+
+    // Single-character operators
+    "@"                                { return EX_AT; }
+    "!"                                { return EX_EXCLAMATION; }
+    "^"                                { return EX_CARET; }
+    "~"                                { return EX_TILDE; }
+    "&"                                { return EX_AMPERSAND; }
+    "+"                                { return EX_PLUS; }
+    "-"                                { return EX_MINUS; }
+    "*"                                { return EX_STAR; }
+    "/"                                { return EX_SLASH; }
+    "="                                { return EX_EQ; }
+    "<"                                { return EX_LT; }
+    ">"                                { return EX_GT; }
+    "|"                                { return EX_PIPE; }
+
+    // Delimiters
+    "("                                { return EX_LPAREN; }
+    ")"                                { return EX_RPAREN; }
+    "["                                { return EX_LBRACKET; }
+    "]"                                { return EX_RBRACKET; }
+    "{"                                { return EX_LBRACE; }
+    "}"                                { return EX_RBRACE; }
+
+    // Punctuation
+    "."                                { return EX_DOT; }
+    ","                                { return EX_COMMA; }
+    ":"                                { return EX_COLON; }
+    ";"                                { return EX_SEMICOLON; }
+    "%"                                { return EX_PERCENT; }
+
+    // Char literals - escape sequences
+    "?\\n"                             { return EX_CHAR; }
+    "?\\r"                             { return EX_CHAR; }
+    "?\\t"                             { return EX_CHAR; }
+    "?\\s"                             { return EX_CHAR; }
+    "?\\0"                             { return EX_CHAR; }
+    "?\\\\"                            { return EX_CHAR; }
+    "?\\?"                             { return EX_CHAR; }
+    // Char literals - regular
+    "?"[^\s]                           { return EX_CHAR; }
+
+    // Numbers
+    {FLOAT_LITERAL}                    { return EX_FLOAT; }
+    {INTEGER}                          { return EX_INTEGER; }
+
+    // Atoms - operator atoms
+    ":..//"                            { return EX_ATOM; }
+    ":<<>>"                            { return EX_ATOM; }
+    ":%{}"                             { return EX_ATOM; }
+    ":<~>"                             { return EX_ATOM; }
+    ":<<~"                             { return EX_ATOM; }
+    ":~>>"                             { return EX_ATOM; }
+    ":<<<"                             { return EX_ATOM; }
+    ":>>>"                             { return EX_ATOM; }
+    ":<|>"                             { return EX_ATOM; }
+    ":==="                             { return EX_ATOM; }
+    ":!=="                             { return EX_ATOM; }
+    ":..."                             { return EX_ATOM; }
+    ":+++"                             { return EX_ATOM; }
+    ":---"                             { return EX_ATOM; }
+    ":&&&"                             { return EX_ATOM; }
+    ":|||"                             { return EX_ATOM; }
+    ":.."                              { return EX_ATOM; }
+    ":=="                              { return EX_ATOM; }
+    ":!="                              { return EX_ATOM; }
+    ":<="                              { return EX_ATOM; }
+    ":>="                              { return EX_ATOM; }
+    ":=~"                              { return EX_ATOM; }
+    ":&&"                              { return EX_ATOM; }
+    ":||"                              { return EX_ATOM; }
+    ":->"                              { return EX_ATOM; }
+    ":<-"                              { return EX_ATOM; }
+    ":=>"                              { return EX_ATOM; }
+    ":|>"                              { return EX_ATOM; }
+    ":<~"                              { return EX_ATOM; }
+    ":~>"                              { return EX_ATOM; }
+    ":++"                              { return EX_ATOM; }
+    ":--"                              { return EX_ATOM; }
+    ":<>"                              { return EX_ATOM; }
+    ":**"                              { return EX_ATOM; }
+    ":::"                              { return EX_ATOM; }
+    ":\\\\"                            { return EX_ATOM; }
+    "://"                              { return EX_ATOM; }
+    ":<<"                              { return EX_ATOM; }
+    ":>>"                              { return EX_ATOM; }
+    ":{}"                              { return EX_ATOM; }
+    ":&"                               { return EX_ATOM; }
+    ":@"                               { return EX_ATOM; }
+    ":+"                               { return EX_ATOM; }
+    ":-"                               { return EX_ATOM; }
+    ":*"                               { return EX_ATOM; }
+    ":/"                               { return EX_ATOM; }
+    ":!"                               { return EX_ATOM; }
+    ":^"                               { return EX_ATOM; }
+    ":~"                               { return EX_ATOM; }
+    ":="                               { return EX_ATOM; }
+    ":<"                               { return EX_ATOM; }
+    ":>"                               { return EX_ATOM; }
+    ":|"                               { return EX_ATOM; }
+    ":."                               { return EX_ATOM; }
+    // Atoms - keyword atoms
+    ":" {ATOM_HEAD}                    { return EX_ATOM; }
+    // Atoms - quoted
+    ":\"" [^\"]* "\""                  { return EX_ATOM_QUOTED; }
+    ":\'" [^\']* "\'"                  { return EX_ATOM_QUOTED; }
+
+    // Interpolated sigils (lowercase)
+    {SIGIL_START_INTERP} "\"\"\""      { return beginSigil(IN_SIGIL_HEREDOC_DQUOTE); }
+    {SIGIL_START_INTERP} "\'\'\'"      { return beginSigil(IN_SIGIL_HEREDOC_SQUOTE); }
+    {SIGIL_START_INTERP} "\""          { return beginSigil(IN_SIGIL_DQUOTE); }
+    {SIGIL_START_INTERP} "\'"          { return beginSigil(IN_SIGIL_SQUOTE); }
+    {SIGIL_START_INTERP} "/"           { return beginSigil(IN_SIGIL_SLASH); }
+    {SIGIL_START_INTERP} "|"           { return beginSigil(IN_SIGIL_PIPE); }
+    {SIGIL_START_INTERP} "("           { return beginSigil(IN_SIGIL_PAREN); }
+    {SIGIL_START_INTERP} "["           { return beginSigil(IN_SIGIL_BRACKET); }
+    {SIGIL_START_INTERP} "{"           { return beginSigil(IN_SIGIL_BRACE); }
+    {SIGIL_START_INTERP} "<"           { return beginSigil(IN_SIGIL_ANGLE); }
+
+    // Sigils (non-interpolated, uppercase)
+    {SIGIL_START_NO_INTERP} "\"\"\"" ~"\"\"\"" {SIGIL_MODIFIERS}   { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "\'\'\'" ~"\'\'\'" {SIGIL_MODIFIERS}   { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "\"" [^\"]* "\"" {SIGIL_MODIFIERS}     { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "\'" [^\']* "\'" {SIGIL_MODIFIERS}     { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "/" {SIGIL_SLASH_CONTENT} "/" {SIGIL_MODIFIERS} { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "|" [^|]* "|" {SIGIL_MODIFIERS}        { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "(" [^)]* ")" {SIGIL_MODIFIERS}        { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "[" [^\]]* "]" {SIGIL_MODIFIERS}       { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "{" [^}]* "}" {SIGIL_MODIFIERS}        { return EX_SIGIL; }
+    {SIGIL_START_NO_INTERP} "<" [^>]* ">" {SIGIL_MODIFIERS}        { return EX_SIGIL; }
+
+    // Strings - heredocs must be before regular strings
+    "\"\"\""                           { return beginString(IN_HEREDOC, EX_STRING_BEGIN); }
+    "\'\'\'"                           { return beginString(IN_CHARLIST_HEREDOC, EX_CHARLIST_BEGIN); }
+
+    // Strings - regular
+    "\""                               { return beginString(IN_STRING, EX_STRING_BEGIN); }
+    "\'"                               { return beginString(IN_CHARLIST, EX_CHARLIST_BEGIN); }
+
+    // Identifiers and aliases
+    {IDENTIFIER} ":" / ({HORIZONTAL_SPACE}|{EOL_CHAR}) { return EX_KW_IDENTIFIER; }
+    {ALIAS}                            { return EX_ALIAS; }
+    {IDENTIFIER}                       { return EX_IDENTIFIER; }
+
+    // Catch all bad characters
+    [^]                                { return BAD_CHARACTER; }
+}
+
+<IN_STRING> {
+    {ESCAPED_NEWLINE}                  { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {UNICODE_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {UNICODE_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC}                          { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {SIMPLE_ESC}                       { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    \\u\{\}                            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u{HEX_DIGIT}{0,3}                { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\x\{\}                            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x[^0-9a-fA-F\r\n\"]              { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x                                { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    {GENERIC_ESC}                      { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    "#{"                               { return beginInterpolation(IN_STRING); }
+    "\""                               { return endString(EX_STRING_END); }
+    [^\"#\\]+                          { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_HEREDOC> {
+    ^{HORIZONTAL_SPACE}*"\"\"\""        { return endString(EX_STRING_END); }
+    {ESCAPED_NEWLINE}                  { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {EOL_CHAR}                         { return EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {UNICODE_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC}                          { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {SIMPLE_ESC}                       { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    \\u\{\}                            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u{HEX_DIGIT}{0,3}                { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\x\{\}                            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x[^0-9a-fA-F\r\n\"]              { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x                                { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    {GENERIC_ESC}                      { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    "#{"                               { return beginInterpolation(IN_HEREDOC); }
+    [^\"#\r\n]+                        { return EX_STRING_PART; }
+    "\""                               { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_CHARLIST> {
+    {ESCAPED_NEWLINE}                  { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {UNICODE_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {UNICODE_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC}                          { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {SIMPLE_ESC}                       { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    \\u\{\}                            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u{HEX_DIGIT}{0,3}                { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\x\{\}                            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x[^0-9a-fA-F\r\n\"]              { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x                                { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    {GENERIC_ESC}                      { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    "#{"                               { return beginInterpolation(IN_CHARLIST); }
+    "\'"                               { return endString(EX_CHARLIST_END); }
+    [^\'#\\]+                          { return EX_CHARLIST_PART; }
+    "#"                                { return EX_CHARLIST_PART; }
+    "\\"                               { return EX_CHARLIST_PART; }
+    .                                  { return EX_CHARLIST_PART; }
+}
+
+<IN_CHARLIST_HEREDOC> {
+    ^{HORIZONTAL_SPACE}*"\'\'\'"        { return endString(EX_CHARLIST_END); }
+    {ESCAPED_NEWLINE}                  { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {EOL_CHAR}                         { return EX_CHARLIST_PART; }
+    {UNICODE_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {UNICODE_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_BRACED}                   { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC}                          { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {HEX_ESC_SHORT}                    { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    {SIMPLE_ESC}                       { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    \\u\{\}                            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\u{HEX_DIGIT}{0,3}                { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+    \\x\{\}                            { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x\{[^}\r\n]*\}                   { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x[^0-9a-fA-F\r\n\"]              { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    \\x                                { return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN; }
+    {GENERIC_ESC}                      { return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN; }
+    "#{"                               { return beginInterpolation(IN_CHARLIST_HEREDOC); }
+    [^\'#\r\n]+                        { return EX_CHARLIST_PART; }
+    "\'"                               { return EX_CHARLIST_PART; }
+    "#"                                { return EX_CHARLIST_PART; }
+    "\\"                               { return EX_CHARLIST_PART; }
+    .                                  { return EX_CHARLIST_PART; }
+}
+
+<IN_SIGIL_PAREN> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_PAREN); }
+    ")" {SIGIL_MODIFIERS}              { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\\)#]+                           { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_BRACKET> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_BRACKET); }
+    "]" {SIGIL_MODIFIERS}              { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^]#\\]+                           { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_BRACE> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_BRACE); }
+    "}" {SIGIL_MODIFIERS}              { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\\}#]+                           { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_ANGLE> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_ANGLE); }
+    ">" {SIGIL_MODIFIERS}              { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\\>#]+                           { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_SLASH> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_SLASH); }
+    "/" {SIGIL_MODIFIERS}              { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\\/#]+                           { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_PIPE> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_PIPE); }
+    "|" {SIGIL_MODIFIERS}              { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\\|#]+                           { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_DQUOTE> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_DQUOTE); }
+    "\"" {SIGIL_MODIFIERS}             { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\"#\\]+                          { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_SQUOTE> {
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_SQUOTE); }
+    "\'" {SIGIL_MODIFIERS}             { sigilLetter = 0; return endString(EX_STRING_END); }
+    [^\'#\\]+                          { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_HEREDOC_DQUOTE> {
+    ^{HORIZONTAL_SPACE}*"\"\"\""{SIGIL_MODIFIERS} { sigilLetter = 0; return endString(EX_STRING_END); }
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {EOL_CHAR}                         { return EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_HEREDOC_DQUOTE); }
+    [^\"#\r\n]+                        { return EX_STRING_PART; }
+    "\""                               { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
+
+<IN_SIGIL_HEREDOC_SQUOTE> {
+    ^{HORIZONTAL_SPACE}*"\'\'\'"{SIGIL_MODIFIERS} { sigilLetter = 0; return endString(EX_STRING_END); }
+    {ESCAPED_NEWLINE}                  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {EOL_CHAR}                         { return EX_STRING_PART; }
+    {UNICODE_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {UNICODE_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_BRACED}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC}                          { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {HEX_ESC_SHORT}                    { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    {SIMPLE_ESC}                       { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u[^0-9a-fA-F\{\r\n\"]            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\u{HEX_DIGIT}{0,3}                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{\}                            { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{{HEX_DIGIT}{7}{HEX_DIGIT}*\}  { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x\{[^}\r\n]*\}                   { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x[^0-9a-fA-F\r\n\"]              { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    \\x                                { return sigilAllowsEscapes() ? StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN : EX_STRING_PART; }
+    {GENERIC_ESC}                      { return sigilAllowsEscapes() ? StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN : EX_STRING_PART; }
+    "#{"                               { return beginInterpolation(IN_SIGIL_HEREDOC_SQUOTE); }
+    [^\'#\r\n]+                        { return EX_STRING_PART; }
+    "\'"                               { return EX_STRING_PART; }
+    "#"                                { return EX_STRING_PART; }
+    "\\"                               { return EX_STRING_PART; }
+    .                                  { return EX_STRING_PART; }
+}
