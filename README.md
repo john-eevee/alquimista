@@ -22,8 +22,15 @@ Expert downloads are selected for the current OS and architecture and checked ag
 - Native Elixir syntax highlighting using the active color scheme, plus TextMate grammars for EEx and HEEx
 - Live templates for functions, `case`, `with`, pipelines, ExUnit tests, and module docs
 - Postfix templates for `.inspect`, `.dbg`, `.ok`, `.error`, `.pipe`, and `.if`
+- Optional Credo warnings in the editor and the Problems window for saved Elixir files
 
 LSP features are presented by the IntelliJ Platform. The available behavior follows the capabilities advertised by the installed Expert release.
+
+## Credo and Mix
+
+Credo is disabled by default. Add Credo to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Yaee checks the active Mix project's dependencies before running Credo, and caches the result until the project configuration changes. Credo analyzes saved `.ex` and `.exs` files; its warnings appear in the editor and the Problems window's current-file view.
+
+Select an Elixir SDK as the project SDK to use its `mix` executable for Credo, Mix actions, and ExUnit gutter runs. Without an Elixir project SDK, Yaee uses mise when available, otherwise `mix` from `PATH`.
 
 ## Build and verify
 
