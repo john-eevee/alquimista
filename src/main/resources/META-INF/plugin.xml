@@ -42,6 +42,7 @@
         <runLineMarkerContributor language="Elixir"
                                   implementationClass="dev.yaee.expert.testing.ExUnitRunLineMarkerContributor"/>
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
+        <directoryProjectGenerator implementation="dev.yaee.expert.project.ElixirProjectGenerator"/>
     </extensions>
 
     <actions>
