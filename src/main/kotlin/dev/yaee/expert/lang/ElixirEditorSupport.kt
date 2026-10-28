@@ -4,6 +4,7 @@ import com.intellij.lang.BracePair
 import com.intellij.lang.Commenter
 import com.intellij.lang.PairedBraceMatcher
 import com.intellij.psi.PsiFile
+import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import dev.murek.elixirij.lang.*
 
@@ -25,6 +26,10 @@ class ElixirBraceMatcher : PairedBraceMatcher {
         BracePair(EX_INTERPOLATION_START, EX_INTERPOLATION_END, false),
     )
 
-    override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean = true
+    override fun isPairedBracesAllowedBeforeType(lbraceType: IElementType, contextType: IElementType?): Boolean =
+        contextType == null || contextType in setOf(
+            TokenType.WHITE_SPACE, EX_EOL, EX_COMMENT, EX_COMMA, EX_SEMICOLON,
+            EX_RPAREN, EX_RBRACKET, EX_RBRACE, EX_GT_GT, EX_INTERPOLATION_END
+        )
     override fun getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = openingBraceOffset
 }
