@@ -24,7 +24,10 @@ class ExpertConfigurable : Configurable {
         }
     }
 
-    override fun isModified(): Boolean = expertPath.text != ExpertSettings.getInstance().expertPath
+    override fun isModified(): Boolean = ExpertPathChange.hasChanged(
+        ExpertSettings.getInstance().expertPath,
+        expertPath.text,
+    )
 
     override fun apply() {
         if (ExpertSettings.getInstance().updateExpertPath(expertPath.text)) {
