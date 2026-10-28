@@ -13,10 +13,14 @@ defmodule Yaee.ExUnitFormatter do
     {:noreply, started}
   end
 
+  def handle_cast({:test_started, %{state: {:excluded, _}}}, started), do: {:noreply, started}
+
   def handle_cast({:test_started, test}, started) do
     start_test(test)
     {:noreply, MapSet.put(started, test_id(test))}
   end
+
+  def handle_cast({:test_finished, %{state: {:excluded, _}}}, started), do: {:noreply, started}
 
   def handle_cast({:test_finished, test}, started) do
     id = test_id(test)
@@ -28,7 +32,6 @@ defmodule Yaee.ExUnitFormatter do
         details = Enum.map_join(failures, "\n", fn {kind, reason, stack} -> Exception.format(kind, reason, stack) end)
         emit("testFailed", common ++ [message: "ExUnit test failed", details: details])
       {:skipped, reason} -> emit("testIgnored", common ++ [message: inspect(reason)])
-      {:excluded, reason} -> emit("testIgnored", common ++ [message: inspect(reason)])
       {:invalid, reason} -> emit("testIgnored", common ++ [message: inspect(reason)])
       _ -> :ok
     end
