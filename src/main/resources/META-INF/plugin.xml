@@ -26,6 +26,10 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="dev.yaee.expert.settings.ExpertSettings"/>
+        <projectService serviceImplementation="dev.yaee.expert.credo.CredoSettings"/>
+        <projectConfigurable parentId="language"
+                instance="dev.yaee.expert.credo.CredoConfigurable"
+                id="dev.yaee.expert.credo.settings" displayName="Credo"/>
         <applicationConfigurable
                 parentId="language"
                 instance="dev.yaee.expert.settings.ExpertConfigurable"
