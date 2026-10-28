@@ -9,6 +9,8 @@ object ExUnitTestDetector {
     private val describePattern = Regex("^\\s*describe\\s+(?:\"((?:\\\\.|[^\"])*)\"|:([\\w?!]+))\\s+do\\b")
     private val testPattern = Regex("^\\s*(?:test|property)\\s+(?:\"((?:\\\\.|[^\"])*)\"|:([\\w?!]+))\\s*(?:,.*)?\\bdo\\b")
 
+    fun isTestFile(fileName: String): Boolean = fileName.endsWith("_test.exs") || fileName.endsWith("_test.ex")
+
     fun detect(source: String): List<DetectedExUnitTest> {
         val describeStack = mutableListOf<Describe>()
         val tests = mutableListOf<DetectedExUnitTest>()

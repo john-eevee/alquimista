@@ -40,6 +40,13 @@ end
     }
 
     @Test
+    fun `recognizes conventional ExUnit test files`() {
+        assertTrue(ExUnitTestDetector.isTestFile("example_test.exs"))
+        assertTrue(ExUnitTestDetector.isTestFile("example_test.ex"))
+        org.junit.Assert.assertFalse(ExUnitTestDetector.isTestFile("example.ex"))
+    }
+
+    @Test
     fun `returns no tests for ordinary source files`() {
         assertTrue(ExUnitTestDetector.detect("defmodule Example do\n  def run, do: :ok\nend\n").isEmpty())
     }

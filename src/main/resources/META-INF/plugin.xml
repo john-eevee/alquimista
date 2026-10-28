@@ -32,6 +32,16 @@
                 displayName="Elixir Expert"/>
         <platform.lsp.serverSupportProvider
                 implementation="dev.yaee.expert.lsp.ExpertLspServerSupportProvider"/>
+        <parserDefinition language="Elixir"
+                          implementationClass="dev.yaee.expert.lang.ElixirParserDefinition"/>
+        <fileType name="Elixir"
+                  language="Elixir"
+                  implementationClass="dev.yaee.expert.lang.ElixirFileType"
+                  fieldName="INSTANCE"
+                  extensions="ex;exs"/>
+        <runLineMarkerContributor language="Elixir"
+                                  implementationClass="dev.yaee.expert.testing.ExUnitRunLineMarkerContributor"/>
+        <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
     </extensions>
 
 </idea-plugin>
