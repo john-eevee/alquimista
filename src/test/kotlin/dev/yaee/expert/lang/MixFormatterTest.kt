@@ -62,6 +62,21 @@ class MixFormatterTest {
         assertEquals("sdk:unsaved text", MixFormatter.run(command, "unsaved text").text)
     }
 
+    @Test fun `compiles formatter plugins when necessary without polluting the formatted text`() {
+        val root = project()
+        Files.writeString(root.resolve("lib/custom_formatter.ex"), """defmodule CustomFormatter do
+  @behaviour Mix.Tasks.Format
+  def features(_opts), do: [extensions: [".ex"]]
+  def format(contents, _opts), do: "# plugin applied\n" <> contents
+end
+""")
+        Files.writeString(root.resolve(".formatter.exs"), "[plugins: [CustomFormatter]]\n")
+        val command = GeneralCommandLine(mix().absolutePath).withParameters(MixFormatter.arguments("lib/example.ex"))
+            .withWorkDirectory(root.toFile()).withEnvironment("ERL_FLAGS", "+S 2:2")
+        val result = MixFormatter.run(command, "value=1\n")
+        assertEquals(result.error, "# plugin applied\nvalue=1\n", result.text)
+    }
+
     @Test fun `registers Mix formatting service`() {
         val xml = javaClass.getResourceAsStream("/META-INF/plugin.xml")!!.use {
             DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(it)

@@ -7,7 +7,11 @@ import java.util.concurrent.TimeUnit
 internal data class MixFormatResult(val text: String? = null, val error: String? = null)
 
 internal object MixFormatter {
-    fun arguments(fileName: String): List<String> = listOf("format", "--no-compile", "--stdin-filename", fileName, "-")
+    fun arguments(fileName: String): List<String> = listOf(
+        "run", "--no-start", "--no-compile", "-e",
+        "Mix.shell(Mix.Shell.Quiet); Mix.Task.run(\"format\", System.argv())",
+        "--", "--stdin-filename", fileName, "-"
+    )
 
     fun run(command: GeneralCommandLine, text: String, onStarted: (Process) -> Unit = {}): MixFormatResult {
         val process = command.createProcess()
