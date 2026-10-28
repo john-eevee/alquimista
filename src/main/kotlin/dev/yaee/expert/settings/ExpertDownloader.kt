@@ -19,6 +19,7 @@ import java.nio.file.StandardCopyOption
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicBoolean
 
+@Suppress("DialogTitleCapitalization")
 object ExpertDownloader {
     private const val RELEASE_API = "https://api.github.com/repos/expert-lsp/expert/releases/latest"
     private val downloading = AtomicBoolean(false)
