@@ -1,7 +1,7 @@
 package dev.yaee.expert.testing
 
 object ExUnitLaunchCommand {
-    fun arguments(formatter: String, path: String?, line: Int?, module: String? = null): List<String> {
+    fun arguments(formatter: String, path: String?, line: Int?, module: String? = null, failedOnly: Boolean = false): List<String> {
         require(formatter.isNotBlank()) { "The ExUnit formatter path is required" }
         require(path == null || path.isNotBlank()) { "The test file path cannot be blank" }
         require(line == null || (path != null && line > 0)) { "A test line requires a file and must be positive" }
@@ -10,7 +10,8 @@ object ExUnitLaunchCommand {
         }
         val target = if (path == null) emptyList() else listOf(if (line == null) path else "$path:$line")
         val filter = if (module == null) emptyList() else listOf("--only", "module:$module")
+        val failed = if (failedOnly) listOf("--failed") else emptyList()
         return listOf("run", "--no-start", "--no-compile", "-r", formatter,
-            "-e", "Mix.Task.run(\"test\", System.argv())", "--", "--formatter", "Yaee.ExUnitFormatter") + filter + target
+            "-e", "Mix.Task.run(\"test\", System.argv())", "--", "--formatter", "Yaee.ExUnitFormatter") + filter + failed + target
     }
 }

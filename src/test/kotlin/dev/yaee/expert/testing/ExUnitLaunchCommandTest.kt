@@ -27,4 +27,10 @@ class ExUnitLaunchCommandTest {
             ExUnitLaunchCommand.arguments("/tmp/f.exs", null, null, "ExampleTest")
         }
     }
+
+    @Test
+    fun `rerun failed adds the Mix failed filter`() {
+        val args = ExUnitLaunchCommand.arguments("/tmp/f.exs", "test/a.exs", null, failedOnly = true)
+        assertEquals(listOf("--failed", "test/a.exs"), args.takeLast(2))
+    }
 }

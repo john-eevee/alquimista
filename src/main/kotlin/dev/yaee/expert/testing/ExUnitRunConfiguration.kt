@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.sm.FileUrlProvider
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.SettingsEditor
@@ -85,21 +86,37 @@ private class ExUnitSettingsEditor : SettingsEditor<ExUnitRunConfiguration>() {
     }
 }
 
-private class ExUnitRunState(environment: ExecutionEnvironment, private val configuration: ExUnitRunConfiguration) : CommandLineState(environment) {
+private class ExUnitRunState(
+    environment: ExecutionEnvironment,
+    private val configuration: ExUnitRunConfiguration,
+    private val failedOnly: Boolean = false,
+) : CommandLineState(environment) {
     override fun startProcess(): ProcessHandler {
         val project = configuration.project
         val root = project.basePath ?: throw ExecutionException("The project has no base directory")
         val formatter = extractFormatter()
         val selection = configuration.selection
-        val args = try { ExUnitLaunchCommand.arguments(formatter, selection.path, selection.line, selection.module) }
+        val args = try { ExUnitLaunchCommand.arguments(formatter, selection.path, selection.line, selection.module, failedOnly) }
         catch (error: IllegalArgumentException) { throw ExecutionException(error.message ?: "Invalid ExUnit selection", error) }
         val command = MixSdkCommand.commandLine(project, args).withWorkDirectory(root).withEnvironment("MIX_ENV", "test")
         return OSProcessHandler(command)
     }
 
     override fun createConsole(executor: Executor): ConsoleView {
-        val properties = object : SMTRunnerConsoleProperties(configuration, "ExUnit", executor) {
+        val runConfiguration = configuration
+        val properties = object : SMTRunnerConsoleProperties(runConfiguration, "ExUnit", executor) {
             override fun getTestLocator(): SMTestLocator = FileUrlProvider.INSTANCE
+            override fun createRerunFailedTestsAction(consoleView: ConsoleView): AbstractRerunFailedTestsAction {
+                val action = object : AbstractRerunFailedTestsAction(consoleView) {
+                    override fun getRunProfile(environment: ExecutionEnvironment): MyRunProfile =
+                        object : MyRunProfile(runConfiguration) {
+                            override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
+                                ExUnitRunState(environment, runConfiguration, failedOnly = true)
+                        }
+                }
+                action.init(this)
+                return action
+            }
         }
         val filter = ExUnitStacktraceFilter(configuration.project)
         properties.addStackTraceFilter(filter)

@@ -104,5 +104,16 @@ end
             "##teamcity[testIgnored", "##teamcity[testFinished", "passes || and |' quote", "locationHint=", "runner_fixture_test.exs")) {
             assertTrue("Missing $expected in:\n$output", output.contains(expected))
         }
+        val rerunFile = root.resolve("rerun-output.txt")
+        val rerunArgs = ExUnitLaunchCommand.arguments(formatterFile.toString(), null, null, failedOnly = true)
+        val rerun = ProcessBuilder(listOf(mix.absolutePath) + rerunArgs).directory(root.toFile())
+            .redirectErrorStream(true).redirectOutput(rerunFile.toFile())
+            .apply { environment()["MIX_ENV"] = "test"; environment()["ERL_FLAGS"] = "+S 2:2" }.start()
+        val rerunFinished = rerun.waitFor(120, TimeUnit.SECONDS)
+        if (!rerunFinished) rerun.destroyForcibly()
+        assertTrue("Rerun timed out", rerunFinished)
+        val rerunOutput = Files.readString(rerunFile)
+        assertTrue(rerunOutput, rerunOutput.contains("##teamcity[testFailed"))
+        assertFalse(rerunOutput, rerunOutput.contains("passes || and |' quote"))
     }
 }
