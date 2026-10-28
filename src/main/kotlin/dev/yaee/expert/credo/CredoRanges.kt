@@ -14,7 +14,18 @@ object CredoRanges {
         if (contentEnd == start) return start to start
         val count = text.codePointCount(start, contentEnd)
         val fromColumn = ((column ?: 1) - 1).coerceIn(0, count - 1)
-        val toColumn = if (columnEnd == null) count else (columnEnd - 1).coerceIn(fromColumn + 1, count)
-        return text.offsetByCodePoints(start, fromColumn) to text.offsetByCodePoints(start, toColumn)
+        val from = text.offsetByCodePoints(start, fromColumn)
+        if (columnEnd == null) return from to contentEnd
+        val graphemes = (columnEnd.toLong() - (column ?: 1).toLong()).coerceAtLeast(1)
+        val matcher = GRAPHEME.matcher(text).region(from, contentEnd)
+        var to = from
+        var remaining = graphemes
+        while (remaining > 0 && matcher.find()) {
+            to = matcher.end()
+            remaining--
+        }
+        return from to to
     }
+
+    private val GRAPHEME = java.util.regex.Pattern.compile("\\X")
 }

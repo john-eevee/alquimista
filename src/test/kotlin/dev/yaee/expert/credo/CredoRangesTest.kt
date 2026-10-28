@@ -17,4 +17,14 @@ class CredoRangesTest {
         assertEquals(4 to 5, CredoRanges.offsets("a\nabc", 2, 100, null))
         assertNull(CredoRanges.offsets("a", 2, 1, 2))
     }
+
+    @Test
+    fun `start columns count combining characters as separate code points`() {
+        assertEquals(2 to 3, CredoRanges.offsets("e\u0301x", 1, 3, 4))
+    }
+
+    @Test
+    fun `trigger length counts a combining sequence as one grapheme`() {
+        assertEquals(0 to 2, CredoRanges.offsets("e\u0301x", 1, 1, 2))
+    }
 }
