@@ -1,0 +1,21 @@
+package dev.yaee.expert.testing
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
+import org.junit.Test
+
+class ExUnitLaunchCommandTest {
+    @Test
+    fun `launches all tests through the bundled formatter`() {
+        assertEquals(listOf("run", "--no-start", "--no-compile", "-r", "/tmp/formatter.exs",
+            "-e", "Mix.Task.run(\"test\", System.argv())", "--", "--formatter", "Yaee.ExUnitFormatter"),
+            ExUnitLaunchCommand.arguments("/tmp/formatter.exs", null, null))
+    }
+
+    @Test
+    fun `launches a specific test without using a shell`() {
+        assertEquals("test/my app_test.exs:42", ExUnitLaunchCommand.arguments("/tmp/f.exs", "test/my app_test.exs", 42).last())
+        assertThrows(IllegalArgumentException::class.java) { ExUnitLaunchCommand.arguments("/tmp/f.exs", null, 1) }
+        assertThrows(IllegalArgumentException::class.java) { ExUnitLaunchCommand.arguments("/tmp/f.exs", "test/a.exs", 0) }
+    }
+}
