@@ -11,6 +11,39 @@ import java.util.concurrent.TimeUnit
 
 class ExUnitFormatterIntegrationTest {
     @Test
+    fun `setup all failures are reported as failures instead of skipped tests`() {
+        val mix = System.getenv("PATH").orEmpty().split(File.pathSeparator).map { File(it, "mix") }
+            .firstOrNull { it.isFile && it.canExecute() }
+        assumeTrue("Mix is required", mix != null)
+        val root = Files.createTempDirectory(Files.createDirectories(Path.of("build", "tmp")), "exunit-setup-").toAbsolutePath()
+        MixProjectTemplate.files("runner_fixture").forEach { (path, content) ->
+            val file = root.resolve(path)
+            Files.createDirectories(file.parent)
+            Files.writeString(file, content)
+        }
+        Files.writeString(root.resolve("test/runner_fixture_test.exs"), """defmodule SetupFailureTest do
+  use ExUnit.Case
+  setup_all do
+    raise "setup exploded"
+  end
+  test "affected", do: assert(true)
+end
+""")
+        val formatter = root.resolve("formatter.exs")
+        javaClass.getResourceAsStream("/exunit/yaee_formatter.exs")!!.use { Files.copy(it, formatter) }
+        val outputFile = root.resolve("output.txt")
+        val process = ProcessBuilder(listOf(mix!!.absolutePath) + ExUnitLaunchCommand.arguments(formatter.toString(), null, null))
+            .directory(root.toFile()).redirectErrorStream(true).redirectOutput(outputFile.toFile())
+            .apply { environment()["MIX_ENV"] = "test"; environment()["ERL_FLAGS"] = "+S 2:2" }.start()
+        val finished = process.waitFor(120, TimeUnit.SECONDS)
+        if (!finished) process.destroyForcibly()
+        assertTrue("Mix timed out", finished)
+        val output = Files.readString(outputFile)
+        assertTrue(output, output.contains("##teamcity[testFailed"))
+        assertTrue(output, output.contains("setup exploded"))
+    }
+
+    @Test
     fun `describe line and module filters run only selected tests`() {
         val mix = System.getenv("PATH").orEmpty().split(File.pathSeparator).map { File(it, "mix") }
             .firstOrNull { it.isFile && it.canExecute() }

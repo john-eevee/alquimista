@@ -29,10 +29,11 @@ defmodule Yaee.ExUnitFormatter do
     common = [name: to_string(test.name), flowId: inspect(test.module)]
     case test.state do
       {:failed, failures} ->
-        details = Enum.map_join(failures, "\n", fn {kind, reason, stack} -> Exception.format(kind, reason, stack) end)
-        emit("testFailed", common ++ [message: "ExUnit test failed", details: details])
+        emit("testFailed", common ++ [message: "ExUnit test failed", details: format_failures(failures)])
       {:skipped, reason} -> emit("testIgnored", common ++ [message: inspect(reason)])
-      {:invalid, reason} -> emit("testIgnored", common ++ [message: inspect(reason)])
+      {:invalid, %{state: {:failed, failures}}} ->
+        emit("testFailed", common ++ [message: "ExUnit setup failed", details: format_failures(failures)])
+      {:invalid, reason} -> emit("testFailed", common ++ [message: "ExUnit setup failed", details: inspect(reason)])
       _ -> :ok
     end
     emit("testFinished", common ++ [duration: div(test.time || 0, 1_000)])
@@ -42,6 +43,8 @@ defmodule Yaee.ExUnitFormatter do
   def handle_cast(_event, started), do: {:noreply, started}
 
   defp test_id(test), do: {test.module, test.name, Map.get(test, :parameters)}
+
+  defp format_failures(failures), do: Enum.map_join(failures, "\n", fn {kind, reason, stack} -> Exception.format(kind, reason, stack) end)
 
   defp start_test(test) do
     file = test.tags[:file]
