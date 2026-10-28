@@ -12,6 +12,13 @@ class ExpertSettings : PersistentStateComponent<ExpertSettings.State> {
     data class State(
         var expertPath: String = "",
         var minimumWorkspaceSymbolQueryLength: Int = DEFAULT_MINIMUM_WORKSPACE_SYMBOL_QUERY_LENGTH,
+        var logLevel: String = "info",
+        var fileLogLevel: String = "debug",
+        var elixirSourcePath: String = "",
+        var elixirExecutablePath: String = "",
+        var erlangExecutablePath: String = "",
+        var autoFetchDependencies: Boolean = true,
+        var compileOnType: Boolean = true,
     )
 
     private var persistedState = State()
@@ -31,7 +38,7 @@ class ExpertSettings : PersistentStateComponent<ExpertSettings.State> {
     var minimumWorkspaceSymbolQueryLength: Int
         get() = persistedState.minimumWorkspaceSymbolQueryLength
         set(value) {
-            persistedState.minimumWorkspaceSymbolQueryLength = value.coerceAtLeast(1)
+            persistedState.minimumWorkspaceSymbolQueryLength = value.coerceAtLeast(0)
         }
 
     override fun getState(): State = persistedState

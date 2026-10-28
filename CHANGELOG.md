@@ -4,6 +4,8 @@
 
 ### Added
 
+- Expert settings for workspace symbols, logging, runtime and source paths, dependency fetching, and compile-on-type.
+
 - Expert LSP integration for Elixir, EEx, and HEEx, including automatic, checksum-verified Expert downloads and mise support.
 - Native Elixir and HEEx syntax highlighting with separate theme-aware color settings, and TextMate highlighting for EEx.
 - Elixir bracket matching, comments, indentation, folding, and Complete Current Statement for delimiters and `do` blocks.
@@ -11,6 +13,10 @@
 - Optional Credo diagnostics for saved Elixir files in the editor and Problems window.
 - A Mix project wizard, Elixir SDK support, Mix actions, and file templates for Elixir and template files.
 - Theme-aware Elixir file icons, live templates, and postfix templates.
+
+### Fixed
+
+- Send Expert configuration through the LSP configuration notification so the server applies it.
 
 ### Changed
 

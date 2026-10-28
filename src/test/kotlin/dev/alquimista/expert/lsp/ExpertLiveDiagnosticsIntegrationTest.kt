@@ -1,6 +1,8 @@
 package dev.alquimista.expert.lsp
 
 import dev.alquimista.expert.project.MixProjectTemplate
+import dev.alquimista.expert.settings.ExpertConfiguration
+import dev.alquimista.expert.settings.ExpertSettings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
@@ -22,7 +24,8 @@ class ExpertLiveDiagnosticsIntegrationTest {
         val script = Path.of("src/test/resources/expert/live_diagnostics.py").toAbsolutePath()
         val output = root.resolve("protocol-test.log")
         val ids = """{"ex":"elixir","exs":"elixir","eex":"eex","heex":"heex"}"""
-        val process = ProcessBuilder("python3", script.toString(), executable!!, root.toString(), ids)
+        val settings = ExpertConfiguration.toJson(ExpertSettings.State(minimumWorkspaceSymbolQueryLength = 0)).toString()
+        val process = ProcessBuilder("python3", script.toString(), executable!!, root.toString(), ids, settings)
             .redirectErrorStream(true).redirectOutput(output.toFile()).start()
         val completed = process.waitFor(150, TimeUnit.SECONDS)
         if (!completed) process.destroyForcibly()
@@ -30,5 +33,6 @@ class ExpertLiveDiagnosticsIntegrationTest {
         val log = Files.readString(output)
         assertEquals(log, 0, process.exitValue())
         assertTrue(log, log.contains("eex, ex, exs"))
+        assertTrue(log, log.contains("empty workspace symbol query"))
     }
 }

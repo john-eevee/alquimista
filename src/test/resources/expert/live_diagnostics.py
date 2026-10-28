@@ -7,7 +7,7 @@ import sys
 import threading
 import time
 
-binary, project_dir, ids_json = sys.argv[1:]
+binary, project_dir, ids_json, settings_json = sys.argv[1:]
 root = pathlib.Path(project_dir).resolve()
 ids = json.loads(ids_json)
 environment = os.environ.copy()
@@ -76,6 +76,10 @@ try:
         if message.get("method") == "window/logMessage" and "Server initialized" in message["params"].get("message", ""):
             break
 
+    send({"jsonrpc": "2.0", "method": "workspace/didChangeConfiguration", "params": {
+        "settings": json.loads(settings_json),
+    }})
+
     files = {}
     for extension, language_id in ids.items():
         path = root / "lib" / f"sample.{extension}"
@@ -97,6 +101,25 @@ try:
                     opened.add(extension)
             if log.startswith("Compiled "):
                 compiled = True
+
+    # The real server must honor the zero query length sent by the plugin.
+    # Indexing may finish after compilation, so repeat the empty query briefly.
+    symbol_deadline = min(deadline, time.monotonic() + 30)
+    request_id = 100
+    found_symbols = False
+    while time.monotonic() < symbol_deadline and not found_symbols:
+        send({"jsonrpc": "2.0", "id": request_id, "method": "workspace/symbol", "params": {"query": ""}})
+        while True:
+            message = next_message(symbol_deadline)
+            if message.get("id") == request_id and "method" not in message:
+                assert "error" not in message, f"Workspace symbol request failed: {message.get('error')}"
+                found_symbols = bool(message.get("result"))
+                break
+        request_id += 1
+        if not found_symbols:
+            time.sleep(0.25)
+    assert found_symbols, "Expert did not honor the empty workspace symbol query setting"
+    print("Expert honored the empty workspace symbol query setting")
 
     for extension, (path, _) in files.items():
         invalid = "defmodule Sample do\n  def value(\nend\n" if extension in ("ex", "exs") else "<%= if true do %>\n"

@@ -1,8 +1,5 @@
 package dev.alquimista.expert.lsp
 
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import com.google.gson.JsonPrimitive
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.BaseProcessHandler
@@ -11,6 +8,8 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspServerListener
 import dev.alquimista.expert.settings.ExpertDownloader
 import dev.alquimista.expert.settings.MiseSupport
 import dev.alquimista.expert.settings.ExpertSettings
@@ -61,16 +60,12 @@ internal class ExpertLspServerDescriptor(project: Project) :
         }
     }
 
-    override fun createInitializationOptions(): Any {
-        val settings = ExpertSettings.getInstance()
-        return JsonObject().apply {
-            add("workspaceSymbols", JsonObject().apply {
-                addProperty("minQueryLength", settings.minimumWorkspaceSymbolQueryLength)
-            })
-            add("additionalWatchedExtensions", JsonArray().apply {
-                add(JsonPrimitive(".heex"))
-                add(JsonPrimitive(".eex"))
-            })
-        }
-    }
+    override val lspServerListener: LspServerListener = ExpertConfigurationListener(
+        findClient = {
+            LspClientManager.getInstance(project)
+                .getClients(ExpertLspServerSupportProvider::class.java)
+                .firstOrNull { it.descriptor === this@ExpertLspServerDescriptor }
+        },
+        settings = { ExpertSettings.getInstance().state },
+    )
 }

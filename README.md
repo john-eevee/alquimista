@@ -36,6 +36,12 @@ Open a Mix project and select an Elixir project SDK to use its `mix` executable 
 
 Set a custom Expert executable under **Settings | Languages & Frameworks | Elixir Expert**. If no executable is configured and Expert cannot start, Alquimista downloads the latest stable release for the current OS and architecture and checks it against the release SHA-256 manifest.
 
+### Expert settings
+
+Under **Settings | Languages & Frameworks | Elixir Expert**, configure the Expert executable, minimum workspace symbol query length (including `0` for empty queries), editor and file log levels, Elixir source directory, Elixir and Erlang runtime executables, dependency fetching, and compile-on-type. Blank paths leave Expert's defaults in effect. Applying changes restarts Expert in open projects. Options depend on the installed Expert version; see [Expert's configuration reference](https://expert-lsp.org/docs/configuration/).
+
+The Expert runtime overrides apply to the language server; the selected Elixir SDK controls Alquimista's Mix actions, Credo, and ExUnit runs.
+
 ### Credo
 
 Credo is disabled by default. Add it to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Alquimista checks and caches whether Credo is available, and analyzes saved `.ex` and `.exs` files.
