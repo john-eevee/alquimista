@@ -17,6 +17,7 @@ dependencies {
         grammarKit()
         jflex()
         bundledPlugin("org.jetbrains.plugins.textmate")
+        bundledPlugin("intellij.testRunner.plugin")
         testFramework(TestFrameworkType.Platform)
 
         // Add plugin dependencies for compilation here, for example:

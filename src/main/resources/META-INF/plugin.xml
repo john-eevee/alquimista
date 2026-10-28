@@ -20,6 +20,7 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.lsp</depends>
     <depends>org.jetbrains.plugins.textmate</depends>
+    <depends>intellij.testRunner.plugin</depends>
 
 
     <!-- Extensions defined by the plugin.
@@ -51,6 +52,7 @@
         <fileIconProvider implementation="dev.yaee.expert.lang.ElixirFileIconProvider"/>
         <runLineMarkerContributor language="Elixir"
                                   implementationClass="dev.yaee.expert.testing.ExUnitRunLineMarkerContributor"/>
+        <configurationType implementation="dev.yaee.expert.testing.ExUnitConfigurationType"/>
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
         <directoryProjectGenerator implementation="dev.yaee.expert.project.ElixirProjectGenerator"/>
         <sdkType implementation="dev.yaee.expert.sdk.ElixirSdkType"/>
