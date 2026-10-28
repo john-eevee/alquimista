@@ -83,7 +83,7 @@ class ElixirSyntaxHighlighterTest {
         while (lexer.tokenType != null) {
             val tokenText = source.substring(lexer.tokenStart, lexer.tokenEnd)
             if (tokenText == "default" || tokenText == "defcustom") {
-                assertEquals(tokenText, emptyList<Any>(), highlighter.getTokenHighlights(lexer.tokenType!!).toList())
+                assertEquals(tokenText, false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD))
             }
             lexer.advance()
         }
@@ -124,9 +124,43 @@ class ElixirSyntaxHighlighterTest {
         lexer.start(source)
         while (lexer.tokenType != null) {
             if (source.substring(lexer.tokenStart, lexer.tokenEnd) == "default") {
-                assertArrayEquals(emptyArray(), highlighter.getTokenHighlights(lexer.tokenType!!))
+                assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD))
             }
             lexer.advance()
         }
+    }
+
+    @Test
+    fun `module aliases use the theme class reference color`() {
+        assertArrayEquals(arrayOf(DefaultLanguageHighlighterColors.CLASS_REFERENCE), highlighter.getTokenHighlights(EX_ALIAS))
+    }
+
+    @Test
+    fun `function declarations and calls use theme colors while variables stay uncolored`() {
+        val source = """defmodule MyApp.Worker do
+  def run(value), do: transform(value)
+  defp transform value, do: Enum.map(value, &normalize/1)
+  value = run
+  output = transform value
+  record.name
+end"""
+        val lexer = highlighter.highlightingLexer
+        lexer.start(source)
+        val found = mutableListOf<Pair<String, List<Any>>>()
+        while (lexer.tokenType != null) {
+            val word = source.substring(lexer.tokenStart, lexer.tokenEnd)
+            if (word in setOf("run", "transform", "map", "normalize", "value", "name")) {
+                found += word to highlighter.getTokenHighlights(lexer.tokenType!!).toList()
+            }
+            lexer.advance()
+        }
+        val declaration = listOf(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION)
+        val call = listOf(DefaultLanguageHighlighterColors.FUNCTION_CALL)
+        assertEquals(listOf(
+            "run" to declaration, "value" to emptyList(), "transform" to call, "value" to emptyList(),
+            "transform" to declaration, "value" to emptyList(), "map" to call, "value" to emptyList(),
+            "normalize" to call, "value" to emptyList(), "run" to emptyList(),
+            "transform" to call, "value" to emptyList(), "name" to emptyList()
+        ), found)
     }
 }

@@ -28,6 +28,9 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
             EX_COMMENTS.contains(tokenType) -> Colors.LINE_COMMENT
             tokenType == EX_RAISE || tokenType == EX_SEND || tokenType == EX_THROW -> null
             tokenType == HIGHLIGHT_MACRO_KEYWORD -> Colors.KEYWORD
+            tokenType == HIGHLIGHT_FUNCTION_DECLARATION -> Colors.FUNCTION_DECLARATION
+            tokenType == HIGHLIGHT_FUNCTION_CALL -> Colors.FUNCTION_CALL
+            tokenType == EX_ALIAS -> Colors.CLASS_REFERENCE
             EX_KEYWORDS.contains(tokenType) -> Colors.KEYWORD
             EX_NUMBERS.contains(tokenType) -> Colors.NUMBER
             EX_STRINGS.contains(tokenType) || tokenType == EX_SIGIL -> Colors.STRING
@@ -46,13 +49,45 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
 }
 
 private val HIGHLIGHT_MACRO_KEYWORD = ExTokenType("HIGHLIGHT_MACRO_KEYWORD")
+private val HIGHLIGHT_FUNCTION_DECLARATION = ExTokenType("HIGHLIGHT_FUNCTION_DECLARATION")
+private val HIGHLIGHT_FUNCTION_CALL = ExTokenType("HIGHLIGHT_FUNCTION_CALL")
 
 private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
     override fun getTokenType(): IElementType? {
         val token = super.getTokenType()
         if (token != EX_IDENTIFIER) return token
         val word = bufferSequence.subSequence(tokenStart, tokenEnd).toString()
-        return if (word in CONTROL_MACROS || (word.startsWith("def") && isDeclaration(word))) HIGHLIGHT_MACRO_KEYWORD else token
+        return when {
+            word in CONTROL_MACROS || (word.startsWith("def") && isDeclaration(word)) -> HIGHLIGHT_MACRO_KEYWORD
+            isFunctionDeclaration() -> HIGHLIGHT_FUNCTION_DECLARATION
+            isFunctionCall() -> HIGHLIGHT_FUNCTION_CALL
+            else -> token
+        }
+    }
+
+    private fun linePrefix(): String {
+        val start = bufferSequence.lastIndexOf('\n', tokenStart - 1).let { if (it < 0) 0 else it + 1 }
+        return bufferSequence.subSequence(start, tokenStart).toString()
+    }
+
+    private fun isFunctionDeclaration(): Boolean = FUNCTION_HEAD.containsMatchIn(linePrefix())
+
+    private fun isFunctionCall(): Boolean {
+        if (linePrefix().trimEnd().endsWith('@')) return false
+        val lexer = ExLexer()
+        lexer.start(bufferSequence, tokenEnd, bufferEnd, 0)
+        var separated = false
+        while (lexer.tokenType == TokenType.WHITE_SPACE) {
+            separated = true
+            lexer.advance()
+        }
+        val next = lexer.tokenType
+        if (next == EX_LPAREN) return true
+        if (next == EX_SLASH && CAPTURE_HEAD.containsMatchIn(linePrefix())) {
+            lexer.advance()
+            return lexer.tokenType == EX_INTEGER
+        }
+        return separated && next in CALL_ARGUMENT_STARTS
     }
 
     private fun isDeclaration(word: String): Boolean {
@@ -94,6 +129,13 @@ private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
         private val BUILTIN_DECLARATIONS = setOf(
             "def", "defp", "defmodule", "defmacro", "defmacrop", "defguard", "defguardp",
             "defdelegate", "defexception", "defimpl", "defprotocol", "defstruct", "defoverridable"
+        )
+        private val FUNCTION_HEAD = Regex("(?:^|;|->|do:)\\s*(?:def|defp|defmacro|defmacrop|defguard|defguardp|defdelegate)\\s+$")
+        private val CAPTURE_HEAD = Regex("&\\s*(?:[A-Z][\\w.]*\\.)?$")
+        private val CALL_ARGUMENT_STARTS = setOf(
+            EX_IDENTIFIER, EX_ALIAS, EX_ATOM, EX_ATOM_QUOTED, EX_KW_IDENTIFIER, EX_INTEGER, EX_FLOAT,
+            EX_STRING_BEGIN, EX_CHARLIST_BEGIN, EX_SIGIL, EX_PERCENT, EX_PERCENT_LBRACE, EX_LBRACKET,
+            EX_LBRACE, EX_LT_LT, EX_TRUE, EX_FALSE, EX_NIL
         )
     }
 }
