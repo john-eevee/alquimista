@@ -1,7 +1,6 @@
 package dev.yaee.expert.testing
 
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -10,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import dev.yaee.expert.settings.MiseSupport
 
 internal class RunExUnitTestAction(
     private val relativePath: String,
@@ -19,8 +19,7 @@ internal class RunExUnitTestAction(
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
         val projectRoot = project.basePath ?: return
-        val command = GeneralCommandLine("mix")
-            .withParameters(MixTestCommand.arguments(relativePath, line))
+        val command = MiseSupport.commandLine("mix", MixTestCommand.arguments(relativePath, line))
             .withWorkDirectory(projectRoot)
 
         object : Task.Backgroundable(project, "Running $displayName", true) {
