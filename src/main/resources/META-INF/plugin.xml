@@ -47,6 +47,7 @@
                           implementationClass="dev.yaee.expert.lang.ElixirSmartEnterProcessor"/>
         <lang.commenter language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirCommenter"/>
         <lang.braceMatcher language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirBraceMatcher"/>
+        <formattingService implementation="dev.yaee.expert.lang.MixFormattingService" order="first"/>
         <externalAnnotator language="Elixir" implementationClass="dev.yaee.expert.credo.CredoExternalAnnotator"/>
         <fileType name="Elixir"
                   language="Elixir"
