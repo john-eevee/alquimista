@@ -1,6 +1,6 @@
-# Yaee: Elixir Expert
+# Yaee: Yet Another Elixir Expert
 
-Elixir language support for IntelliJ-based IDEs powered by the [Expert language server](https://github.com/expert-lsp/expert).
+Yaee (Yet Another Elixir Expert) brings Elixir support to IntelliJ-based IDEs. It uses the [Expert language server](https://github.com/expert-lsp/expert) as its language engine and complements it with IntelliJ features such as test gutters, Mix actions, project creation, SDK configuration, and editor templates.
 
 ## Requirements
 
