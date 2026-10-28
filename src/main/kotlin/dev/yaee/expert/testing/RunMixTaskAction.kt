@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -13,7 +14,9 @@ import dev.yaee.expert.settings.MiseSupport
 open class RunMixTaskAction(
     private val title: String,
     private val arguments: List<String>,
-) : AnAction(title) {
+) : AnAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
     override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = event.project?.basePath != null
     }
