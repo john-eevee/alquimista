@@ -1,14 +1,14 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id>dev.yaee.expert</id>
+    <id>dev.alquimista.expert</id>
 
     <!-- Public plugin name should be written in Title Case.
      Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
-    <name>Yaee: Elixir Expert</name>
+    <name>Alquimista</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor>Yaee</vendor>
+    <vendor>Alquimista</vendor>
 
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
@@ -26,58 +26,58 @@
     <!-- Extensions defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="dev.yaee.expert.settings.ExpertSettings"/>
-        <projectService serviceImplementation="dev.yaee.expert.credo.CredoSettings"/>
-        <projectService serviceImplementation="dev.yaee.expert.credo.CredoRunner"/>
+        <applicationService serviceImplementation="dev.alquimista.expert.settings.ExpertSettings"/>
+        <projectService serviceImplementation="dev.alquimista.expert.credo.CredoSettings"/>
+        <projectService serviceImplementation="dev.alquimista.expert.credo.CredoRunner"/>
         <projectConfigurable parentId="language"
-                instance="dev.yaee.expert.credo.CredoConfigurable"
-                id="dev.yaee.expert.credo.settings" displayName="Credo"/>
+                instance="dev.alquimista.expert.credo.CredoConfigurable"
+                id="dev.alquimista.expert.credo.settings" displayName="Credo"/>
         <applicationConfigurable
                 parentId="language"
-                instance="dev.yaee.expert.settings.ExpertConfigurable"
-                id="dev.yaee.expert.settings.ExpertConfigurable"
+                instance="dev.alquimista.expert.settings.ExpertConfigurable"
+                id="dev.alquimista.expert.settings.ExpertConfigurable"
                 displayName="Elixir Expert"/>
         <platform.lsp.integrationProvider
-                implementation="dev.yaee.expert.lsp.ExpertLspServerSupportProvider"/>
+                implementation="dev.alquimista.expert.lsp.ExpertLspServerSupportProvider"/>
         <lang.parserDefinition language="Elixir"
-                          implementationClass="dev.yaee.expert.lang.ElixirParserDefinition"/>
+                          implementationClass="dev.alquimista.expert.lang.ElixirParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Elixir"
-                          implementationClass="dev.yaee.expert.lang.ElixirSyntaxHighlighterFactory"/>
-        <lang.parserDefinition language="HEEx" implementationClass="dev.yaee.expert.lang.HeexParserDefinition"/>
-        <lang.syntaxHighlighterFactory language="HEEx" implementationClass="dev.yaee.expert.lang.HeexSyntaxHighlighterFactory"/>
-        <fileType name="HEEx" language="HEEx" implementationClass="dev.yaee.expert.lang.HeexFileType" fieldName="INSTANCE" extensions="heex"/>
-        <colorSettingsPage implementation="dev.yaee.expert.lang.ElixirColorSettingsPage"/>
-        <colorSettingsPage implementation="dev.yaee.expert.lang.HeexColorSettingsPage"/>
+                          implementationClass="dev.alquimista.expert.lang.ElixirSyntaxHighlighterFactory"/>
+        <lang.parserDefinition language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexSyntaxHighlighterFactory"/>
+        <fileType name="HEEx" language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFileType" fieldName="INSTANCE" extensions="heex"/>
+        <colorSettingsPage implementation="dev.alquimista.expert.lang.ElixirColorSettingsPage"/>
+        <colorSettingsPage implementation="dev.alquimista.expert.lang.HeexColorSettingsPage"/>
         <lang.smartEnterProcessor language="Elixir"
-                          implementationClass="dev.yaee.expert.lang.ElixirSmartEnterProcessor"/>
-        <lang.commenter language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirCommenter"/>
-        <lang.braceMatcher language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirBraceMatcher"/>
-        <lang.foldingBuilder language="Elixir" implementationClass="dev.yaee.expert.lang.ElixirFoldingBuilder"/>
-        <lineIndentProvider implementation="dev.yaee.expert.lang.ElixirLineIndentProvider"/>
-        <externalAnnotator language="Elixir" implementationClass="dev.yaee.expert.credo.CredoExternalAnnotator"/>
+                          implementationClass="dev.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
+        <lang.commenter language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirCommenter"/>
+        <lang.braceMatcher language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirBraceMatcher"/>
+        <lang.foldingBuilder language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirFoldingBuilder"/>
+        <lineIndentProvider implementation="dev.alquimista.expert.lang.ElixirLineIndentProvider"/>
+        <externalAnnotator language="Elixir" implementationClass="dev.alquimista.expert.credo.CredoExternalAnnotator"/>
         <fileType name="Elixir"
                   language="Elixir"
-                  implementationClass="dev.yaee.expert.lang.ElixirFileType"
+                  implementationClass="dev.alquimista.expert.lang.ElixirFileType"
                   fieldName="INSTANCE"
                   extensions="ex;exs"/>
-        <fileIconProvider implementation="dev.yaee.expert.lang.ElixirFileIconProvider"/>
+        <fileIconProvider implementation="dev.alquimista.expert.lang.ElixirFileIconProvider"/>
         <runLineMarkerContributor language="Elixir"
-                                  implementationClass="dev.yaee.expert.testing.ExUnitRunLineMarkerContributor"/>
-        <configurationType implementation="dev.yaee.expert.testing.ExUnitConfigurationType"/>
+                                  implementationClass="dev.alquimista.expert.testing.ExUnitRunLineMarkerContributor"/>
+        <configurationType implementation="dev.alquimista.expert.testing.ExUnitConfigurationType"/>
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
-        <directoryProjectGenerator implementation="dev.yaee.expert.project.ElixirProjectGenerator"/>
-        <sdkType implementation="dev.yaee.expert.sdk.ElixirSdkType"/>
+        <directoryProjectGenerator implementation="dev.alquimista.expert.project.ElixirProjectGenerator"/>
+        <sdkType implementation="dev.alquimista.expert.sdk.ElixirSdkType"/>
         <defaultLiveTemplates file="/liveTemplates/Elixir.xml"/>
         <liveTemplateContext contextId="ELIXIR"
-                             implementation="dev.yaee.expert.lang.ElixirLiveTemplateContext"/>
+                             implementation="dev.alquimista.expert.lang.ElixirLiveTemplateContext"/>
         <codeInsight.template.postfixTemplateProvider language="Elixir"
-                                 implementationClass="dev.yaee.expert.lang.ElixirPostfixTemplateProvider"/>
-        <textmate.bundleProvider implementation="dev.yaee.expert.lang.ElixirTextMateBundleProvider"/>
+                                 implementationClass="dev.alquimista.expert.lang.ElixirPostfixTemplateProvider"/>
+        <textmate.bundleProvider implementation="dev.alquimista.expert.lang.ElixirTextMateBundleProvider"/>
     </extensions>
 
     <actions>
         <action id="ElixirExpert.NewFile"
-                class="dev.yaee.expert.project.CreateElixirFileAction"
+                class="dev.alquimista.expert.project.CreateElixirFileAction"
                 text="Elixir File"
                 description="Create an Elixir source, script, or template file">
             <add-to-group group-id="NewGroup" anchor="last"/>
@@ -85,13 +85,13 @@
         <group id="ElixirExpert.ToolsMenu" text="Elixir" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="ElixirExpert.RunMixTests"
-                    class="dev.yaee.expert.testing.RunMixTestsAction"
+                    class="dev.alquimista.expert.testing.RunMixTestsAction"
                     text="Run Mix Tests"/>
             <action id="ElixirExpert.MixFormat"
-                    class="dev.yaee.expert.testing.MixFormatAction"
+                    class="dev.alquimista.expert.testing.MixFormatAction"
                     text="Run Mix Format"/>
             <action id="ElixirExpert.MixDepsGet"
-                    class="dev.yaee.expert.testing.MixDepsGetAction"
+                    class="dev.alquimista.expert.testing.MixDepsGetAction"
                     text="Fetch Mix Dependencies"/>
         </group>
     </actions>

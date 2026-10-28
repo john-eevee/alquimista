@@ -1,6 +1,6 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
 
-# Yaee: Elixir Expert Changelog
+# Alquimista Changelog
 
 ## [Unreleased]
 

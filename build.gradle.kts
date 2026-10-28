@@ -32,13 +32,13 @@ tasks {
     generateParser {
         sourceFile.set(file("src/main/grammars/Elixir.bnf"))
         targetRootOutputDir.set(generatedGrammarRoot)
-        pathToParser.set("/dev/yaee/expert/grammar/parser/ExParser.java")
-        pathToPsiRoot.set("/dev/yaee/expert/grammar/psi")
+        pathToParser.set("/dev/alquimista/expert/grammar/parser/ExParser.java")
+        pathToPsiRoot.set("/dev/alquimista/expert/grammar/psi")
     }
     generateLexer {
         sourceFile.set(file("src/main/grammars/Elixir.flex"))
         targetRootOutputDir.set(generatedGrammarRoot)
-        pathToClass.set("/dev/yaee/expert/grammar/lexer/_ExLexer.java")
+        pathToClass.set("/dev/alquimista/expert/grammar/lexer/_ExLexer.java")
         dependsOn(generateParser)
     }
     compileKotlin { dependsOn(generateLexer) }

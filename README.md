@@ -1,6 +1,10 @@
-# Yaee: Yet Another Elixir Expert
+# Alquimista
 
-Yaee (Yet Another Elixir Expert) brings Elixir support to IntelliJ-based IDEs. It uses the [Expert language server](https://github.com/expert-lsp/expert) as its language engine and complements it with IntelliJ features such as test gutters, Mix actions, project creation, SDK configuration, and editor templates.
+Alquimista brings Elixir support to IntelliJ-based IDEs. It uses the [Expert language server](https://github.com/expert-lsp/expert) as its language engine and complements it with IntelliJ features such as test gutters, Mix actions, project creation, SDK configuration, and editor templates.
+
+## Upgrading from the previous plugin
+
+Alquimista has a new plugin ID. Uninstall the previous version before installing it to avoid loading both plugins. Expert and Credo settings, saved ExUnit run configurations, and custom Elixir and HEEx colors use new identifiers and need to be configured again.
 
 ## Requirements
 
@@ -29,9 +33,9 @@ Editor formatting uses Expert's LSP formatter; the separate **Tools | Elixir | R
 
 ## Credo and Mix
 
-Credo is disabled by default. Add Credo to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Yaee checks the active Mix project's dependencies before running Credo, and caches the result until the project configuration changes. Credo analyzes saved `.ex` and `.exs` files; its warnings appear in the editor and the Problems window's current-file view.
+Credo is disabled by default. Add Credo to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Alquimista checks the active Mix project's dependencies before running Credo, and caches the result until the project configuration changes. Credo analyzes saved `.ex` and `.exs` files; its warnings appear in the editor and the Problems window's current-file view.
 
-Select an Elixir SDK as the project SDK to use its `mix` executable for Credo, Mix actions, and ExUnit gutter runs. Without an Elixir project SDK, Yaee uses mise when available, otherwise `mix` from `PATH`.
+Select an Elixir SDK as the project SDK to use its `mix` executable for Credo, Mix actions, and ExUnit gutter runs. Without an Elixir project SDK, Alquimista uses mise when available, otherwise `mix` from `PATH`.
 
 ## Build and verify
 

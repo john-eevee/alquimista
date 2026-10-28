@@ -1,9 +1,9 @@
-package dev.yaee.expert.grammar.lexer;
+package dev.alquimista.expert.grammar.lexer;
 
 import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
-import static dev.yaee.expert.grammar.ElementTypes.*;
+import static dev.alquimista.expert.grammar.ElementTypes.*;
 
 %%
 
