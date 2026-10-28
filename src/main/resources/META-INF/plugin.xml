@@ -43,6 +43,7 @@
                                   implementationClass="dev.yaee.expert.testing.ExUnitRunLineMarkerContributor"/>
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
         <directoryProjectGenerator implementation="dev.yaee.expert.project.ElixirProjectGenerator"/>
+        <sdkType implementation="dev.yaee.expert.sdk.ElixirSdkType"/>
     </extensions>
 
     <actions>
