@@ -54,6 +54,14 @@ open class RunMixTaskAction(
     }
 }
 
-class RunMixTestsAction : RunMixTaskAction("Running Mix Tests", MixTask.TEST)
+class RunMixTestsAction : AnAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+    override fun update(event: AnActionEvent) {
+        event.presentation.isEnabledAndVisible = event.project?.basePath != null
+    }
+    override fun actionPerformed(event: AnActionEvent) {
+        event.project?.let { ExUnitRunner.run(it, "All ExUnit Tests", ExUnitRunSelection(null, null, null)) }
+    }
+}
 class MixFormatAction : RunMixTaskAction("Running Mix Format", MixTask.FORMAT)
 class MixDepsGetAction : RunMixTaskAction("Fetching Mix Dependencies", MixTask.DEPENDENCIES)

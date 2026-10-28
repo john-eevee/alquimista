@@ -10,6 +10,10 @@ data class ExUnitRunSelection(val path: String?, val line: Int?, val module: Str
     }
 
     companion object {
+        fun forTarget(path: String, target: ExUnitTarget): ExUnitRunSelection =
+            if (target.kind == ExUnitTargetKind.MODULE) ExUnitRunSelection(path, null, target.displayName)
+            else ExUnitRunSelection(path, target.line, null)
+
         fun read(element: Element) = ExUnitRunSelection(
             element.getAttributeValue("testPath")?.takeIf(String::isNotBlank),
             element.getAttributeValue("testLine")?.toIntOrNull(),

@@ -7,6 +7,14 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class ExUnitRunConfigurationTest {
     @Test
+    fun `group and individual gutters select their line while module gutters select the module`() {
+        val file = "test/example_test.exs"
+        assertEquals(ExUnitRunSelection(file, 3, null), ExUnitRunSelection.forTarget(file, ExUnitTarget("group", 3, ExUnitTargetKind.DESCRIBE)))
+        assertEquals(ExUnitRunSelection(file, 4, null), ExUnitRunSelection.forTarget(file, ExUnitTarget("test", 4, ExUnitTargetKind.TEST)))
+        assertEquals(ExUnitRunSelection(file, null, "ExampleTest"), ExUnitRunSelection.forTarget(file, ExUnitTarget("ExampleTest", 1, ExUnitTargetKind.MODULE)))
+    }
+
+    @Test
     fun `persists a test selection for later reruns`() {
         val selection = ExUnitRunSelection("test/a_test.exs", 12, null)
         val element = Element("configuration")

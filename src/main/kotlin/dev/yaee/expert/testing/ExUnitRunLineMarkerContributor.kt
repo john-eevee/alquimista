@@ -10,7 +10,7 @@ import java.nio.file.Paths
 
 internal class ExUnitRunLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
     override fun getInfo(element: PsiElement): Info? {
-        if (element.elementType != EX_IDENTIFIER || element.text !in setOf("test", "property")) return null
+        if (element.elementType != EX_IDENTIFIER || element.text !in setOf("test", "property", "describe", "defmodule")) return null
         val project = element.project
         val projectRoot = project.basePath ?: return null
         val virtualFile = element.containingFile.virtualFile ?: return null
@@ -23,9 +23,9 @@ internal class ExUnitRunLineMarkerContributor : RunLineMarkerContributor(), Dumb
 
         val source = element.containingFile.text
         val line = source.substring(0, element.textRange.startOffset).count { it == '\n' } + 1
-        val detected = ExUnitTestDetector.detect(source).firstOrNull { it.line == line } ?: return null
+        val detected = ExUnitTestDetector.targets(source).firstOrNull { it.line == line } ?: return null
         val relativePath = path.toString().replace('\\', '/')
-        val action = RunExUnitTestAction(relativePath, line, detected.displayName)
+        val action = RunExUnitTestAction(ExUnitRunSelection.forTarget(relativePath, detected), detected.displayName)
         return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(action)) {
             "Run ${detected.displayName}"
         }
