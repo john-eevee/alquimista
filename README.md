@@ -61,6 +61,6 @@ Use the Gradle wrapper to build and test the plugin:
 ./gradlew verifyPlugin   # Check compatibility with configured IntelliJ versions
 ```
 
-The Expert live-diagnostics integration test can run against a local Expert executable by setting `ALQUIMISTA_EXPERT_TEST_EXECUTABLE` to its path. The Credo process integration test requires `ALQUIMISTA_CREDO_FIXTURE` to point to a Mix project with Credo installed. These tests are skipped when their respective variables are unset.
+The Expert live-diagnostics integration test can run against a local Expert executable by setting `ALQUIMISTA_EXPERT_TEST_EXECUTABLE` to its path; it is skipped when the variable is unset. The Credo integration test uses the bundled fixture and runs when Mix is available. It requires Hex and downloads the fixture’s locked dependencies on its first run into `build/test-fixtures/credo`.
 
 The bundled TextMate grammars are derived from [thiagopromano/explore](https://github.com/thiagopromano/explore) and remain under Apache-2.0; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
