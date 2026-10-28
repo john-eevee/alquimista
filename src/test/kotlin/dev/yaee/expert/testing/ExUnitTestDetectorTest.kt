@@ -40,6 +40,13 @@ end
     }
 
     @Test
+    fun `preserves hash characters inside quoted test names but strips comments`() {
+        val source = "test \"parses # sections\" do # this is a comment\n  :ok\nend\n"
+
+        assertEquals(listOf(DetectedExUnitTest("parses # sections", 1)), ExUnitTestDetector.detect(source))
+    }
+
+    @Test
     fun `recognizes conventional ExUnit test files`() {
         assertTrue(ExUnitTestDetector.isTestFile("example_test.exs"))
         assertTrue(ExUnitTestDetector.isTestFile("example_test.ex"))

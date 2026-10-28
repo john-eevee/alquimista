@@ -16,7 +16,7 @@ object ExUnitTestDetector {
         val tests = mutableListOf<DetectedExUnitTest>()
 
         source.lineSequence().forEachIndexed { index, rawLine ->
-            val line = rawLine.substringBefore('#')
+            val line = stripComment(rawLine)
             val indentation = line.takeWhile(Char::isWhitespace).length
             while (describeStack.lastOrNull()?.indentation?.let { indentation <= it } == true) {
                 describeStack.removeAt(describeStack.lastIndex)
@@ -40,4 +40,23 @@ object ExUnitTestDetector {
     private fun label(match: MatchResult): String =
         match.groupValues.getOrNull(1)?.takeIf(String::isNotEmpty)
             ?: match.groupValues.getOrNull(2).orEmpty()
+
+    private fun stripComment(line: String): String {
+        var quote: Char? = null
+        var escaped = false
+        line.forEachIndexed { index, char ->
+            if (escaped) {
+                escaped = false
+            } else if (char == '\\' && quote != null) {
+                escaped = true
+            } else if (quote != null && char == quote) {
+                quote = null
+            } else if (quote == null && (char == '"' || char == '\'')) {
+                quote = char
+            } else if (quote == null && char == '#') {
+                return line.substring(0, index)
+            }
+        }
+        return line
+    }
 }
