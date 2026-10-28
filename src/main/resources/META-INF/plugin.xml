@@ -27,6 +27,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="dev.yaee.expert.settings.ExpertSettings"/>
         <projectService serviceImplementation="dev.yaee.expert.credo.CredoSettings"/>
+        <projectService serviceImplementation="dev.yaee.expert.credo.CredoRunner"/>
         <projectConfigurable parentId="language"
                 instance="dev.yaee.expert.credo.CredoConfigurable"
                 id="dev.yaee.expert.credo.settings" displayName="Credo"/>
@@ -41,6 +42,7 @@
                           implementationClass="dev.yaee.expert.lang.ElixirParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Elixir"
                           implementationClass="dev.yaee.expert.lang.ElixirSyntaxHighlighterFactory"/>
+        <externalAnnotator language="Elixir" implementationClass="dev.yaee.expert.credo.CredoExternalAnnotator"/>
         <fileType name="Elixir"
                   language="Elixir"
                   implementationClass="dev.yaee.expert.lang.ElixirFileType"

@@ -16,6 +16,7 @@ class CredoConfigurable(private val project: Project) : Configurable {
     override fun apply() {
         if (isModified) {
             CredoSettings.getInstance(project).state.enabled = enabled.isSelected
+            project.getService(CredoRunner::class.java).clear()
             DaemonCodeAnalyzer.getInstance(project).restart("Credo settings changed")
         }
     }
