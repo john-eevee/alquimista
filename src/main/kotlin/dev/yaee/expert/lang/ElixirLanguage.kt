@@ -15,7 +15,7 @@ class ElixirFileType private constructor() : LanguageFileType(ElixirLanguage.INS
     override fun getName(): String = "Elixir"
     override fun getDescription(): String = "Elixir source file"
     override fun getDefaultExtension(): String = "ex"
-    override fun getIcon(): Icon? = null
+    override fun getIcon(): Icon = ElixirIcons.FILE
 
     companion object {
         @JvmField

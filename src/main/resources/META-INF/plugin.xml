@@ -48,6 +48,7 @@
                   implementationClass="dev.yaee.expert.lang.ElixirFileType"
                   fieldName="INSTANCE"
                   extensions="ex;exs"/>
+        <fileIconProvider implementation="dev.yaee.expert.lang.ElixirFileIconProvider"/>
         <runLineMarkerContributor language="Elixir"
                                   implementationClass="dev.yaee.expert.testing.ExUnitRunLineMarkerContributor"/>
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
