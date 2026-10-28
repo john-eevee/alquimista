@@ -32,4 +32,19 @@ class CredoEngineTest {
         assertEquals(3, calls.size)
         assertEquals(listOf("credo", "suggest", "lib/a.ex", "--format", "json", "--mute-exit-status", "--no-color"), calls[1])
     }
+
+    @Test
+    fun `failed dependency probes and failed credo runs are not repeatedly spawned`() {
+        var probes = 0
+        val unavailable = CredoEngine { probes++; null }
+        repeat(3) { unavailable.analyze(true, "config", "lib/a.ex", "v1") }
+        assertEquals(1, probes)
+
+        var calls = 0
+        val fails = CredoEngine { args -> calls++; if (args == listOf("deps")) "* credo 1.7\n  ok" else null }
+        repeat(3) { assertNull(fails.analyze(true, "config", "lib/a.ex", "v1")) }
+        assertEquals(2, calls)
+        fails.analyze(true, "config", "lib/a.ex", "v2")
+        assertEquals(3, calls)
+    }
 }
