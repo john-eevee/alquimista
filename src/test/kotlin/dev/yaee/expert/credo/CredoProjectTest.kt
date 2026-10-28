@@ -27,4 +27,14 @@ class CredoProjectTest {
         assertNotEquals(before, CredoProject.fingerprint(root, root, "sdk"))
         assertNotEquals(before, CredoProject.fingerprint(root, root, "other-sdk"))
     }
+
+    @Test
+    fun `recognizes dependency and config changes inside the project`() {
+        val root = Paths.get("/workspace/project")
+        assertTrue(CredoProject.isConfigurationChange(root, root.resolve("mix.lock")))
+        assertTrue(CredoProject.isConfigurationChange(root, root.resolve("apps/app/deps/credo")))
+        assertTrue(CredoProject.isConfigurationChange(root, root.resolve(".credo.exs")))
+        assertFalse(CredoProject.isConfigurationChange(root, root.resolve("lib/example.ex")))
+        assertFalse(CredoProject.isConfigurationChange(root, Paths.get("/workspace/other/mix.lock")))
+    }
 }

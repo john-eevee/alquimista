@@ -9,6 +9,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
 import dev.yaee.expert.sdk.MixSdkCommand
 import java.nio.file.Path
@@ -20,7 +23,8 @@ class CredoRunner(private val project: Project) {
     private val engines = ConcurrentHashMap<Path, CredoEngine>()
 
     init {
-        ApplicationManager.getApplication().messageBus.connect(project).subscribe(
+        val connection = ApplicationManager.getApplication().messageBus.connect(project)
+        connection.subscribe(
             FileDocumentManagerListener.TOPIC,
             object : FileDocumentManagerListener {
                 override fun afterDocumentSaved(document: Document) {
@@ -41,6 +45,18 @@ class CredoRunner(private val project: Project) {
                 }
             },
         )
+        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+            override fun after(events: List<VFileEvent>) {
+                if (project.isDisposed || !CredoSettings.getInstance(project).state.enabled) return
+                val root = project.basePath?.let(Paths::get) ?: return
+                if (events.none { event -> runCatching { CredoProject.isConfigurationChange(root, Paths.get(event.path)) }.getOrDefault(false) }) return
+                ApplicationManager.getApplication().invokeLater {
+                    if (project.isDisposed || !CredoSettings.getInstance(project).state.enabled) return@invokeLater
+                    engines.clear()
+                    DaemonCodeAnalyzer.getInstance(project).restart("Credo dependencies changed")
+                }
+            }
+        })
     }
 
     fun clear() = engines.clear()

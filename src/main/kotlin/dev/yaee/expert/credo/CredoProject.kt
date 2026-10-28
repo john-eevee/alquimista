@@ -4,6 +4,15 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 object CredoProject {
+    fun isConfigurationChange(projectRoot: Path, changed: Path): Boolean {
+        val root = projectRoot.toAbsolutePath().normalize()
+        val path = changed.toAbsolutePath().normalize()
+        if (!path.startsWith(root)) return false
+        val name = path.fileName?.toString() ?: return false
+        return name in setOf("mix.exs", "mix.lock", ".credo.exs", "deps") ||
+            (name == "credo" && path.parent?.fileName?.toString() == "deps")
+    }
+
     fun findMixRoot(projectRoot: Path, file: Path): Path? {
         val root = projectRoot.toAbsolutePath().normalize()
         val target = file.toAbsolutePath().normalize()
