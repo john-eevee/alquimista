@@ -19,6 +19,7 @@
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.lsp</depends>
+    <depends>org.jetbrains.plugins.textmate</depends>
 
 
     <!-- Extensions defined by the plugin.
@@ -49,6 +50,7 @@
                              implementation="dev.yaee.expert.lang.ElixirLiveTemplateContext"/>
         <postfixTemplateProvider language="Elixir"
                                  implementationClass="dev.yaee.expert.lang.ElixirPostfixTemplateProvider"/>
+        <textmate.bundleProvider implementation="dev.yaee.expert.lang.ElixirTextMateBundleProvider"/>
     </extensions>
 
     <actions>

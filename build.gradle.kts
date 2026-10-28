@@ -13,9 +13,18 @@ dependencies {
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
         intellijIdea("2026.2.3")
+        bundledPlugin("org.jetbrains.plugins.textmate")
         testFramework(TestFrameworkType.Platform)
 
         // Add plugin dependencies for compilation here, for example:
         // bundledPlugin("com.intellij.java")
+    }
+}
+
+tasks {
+    prepareSandbox {
+        from("src/main/resources/textmate") {
+            into("${project.name}/textmate")
+        }
     }
 }
