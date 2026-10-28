@@ -36,7 +36,7 @@ class MixFormattingService : AsyncDocumentFormattingService() {
                 val mixRoot = CredoProject.findMixRoot(Paths.get(base), file) ?: error("No Mix project contains this file.")
                 val relative = mixRoot.relativize(file).toString()
                 val command = MixSdkCommand.commandLine(project, MixFormatter.arguments(relative)).withWorkDirectory(mixRoot.toFile())
-                val result = MixFormatter.run(command, request.documentText) {
+                val result = MixFormatter.run({ command.createProcess() }, request.documentText) {
                     process.set(it)
                     if (cancelled.get()) it.destroyForcibly()
                 }

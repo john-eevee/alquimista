@@ -1,6 +1,5 @@
 package dev.yaee.expert.lang
 
-import com.intellij.execution.configurations.GeneralCommandLine
 import dev.yaee.expert.project.MixProjectTemplate
 import dev.yaee.expert.sdk.MixSdkCommand
 import org.junit.Assert.*
@@ -32,18 +31,18 @@ class MixFormatterTest {
     @Test fun `formats unsaved text with project formatter configuration`() {
         val root = project()
         Files.writeString(root.resolve(".formatter.exs"), "[line_length: 20]\n")
-        val command = GeneralCommandLine(mix().absolutePath).withParameters(MixFormatter.arguments("lib/example.ex"))
-            .withWorkDirectory(root.toFile()).withEnvironment("ERL_FLAGS", "+S 2:2")
-        val result = MixFormatter.run(command, "defmodule Example do\ndef f, do: [1,2,3,4,5,6,7,8]\nend\n")
+        val command = ProcessBuilder(listOf(mix().absolutePath) + MixFormatter.arguments("lib/example.ex"))
+            .directory(root.toFile()).apply { environment()["ERL_FLAGS"] = "+S 2:2" }
+        val result = MixFormatter.run({ command.start() }, "defmodule Example do\ndef f, do: [1,2,3,4,5,6,7,8]\nend\n")
         assertTrue(result.error.orEmpty(), result.text!!.contains("defmodule Example do\n  def f"))
         assertTrue(result.text.contains("\n    "))
     }
 
     @Test fun `syntax errors are returned instead of formatted text`() {
         val root = project()
-        val command = GeneralCommandLine(mix().absolutePath).withParameters(MixFormatter.arguments("lib/example.ex"))
-            .withWorkDirectory(root.toFile()).withEnvironment("ERL_FLAGS", "+S 2:2")
-        val result = MixFormatter.run(command, "defmodule Broken do\n")
+        val command = ProcessBuilder(listOf(mix().absolutePath) + MixFormatter.arguments("lib/example.ex"))
+            .directory(root.toFile()).apply { environment()["ERL_FLAGS"] = "+S 2:2" }
+        val result = MixFormatter.run({ command.start() }, "defmodule Broken do\n")
         assertNull(result.text)
         assertFalse(result.error.isNullOrBlank())
     }
@@ -57,9 +56,9 @@ class MixFormatterTest {
         assertTrue(elixir.setExecutable(true))
         assertTrue(mix.setExecutable(true))
         val invocation = MixSdkCommand.forSdk(root.resolve("sdk").toString(), MixFormatter.arguments("lib/example.ex"), System.getenv("PATH").orEmpty(), false)
-        val command = GeneralCommandLine(invocation.executable).withParameters(invocation.arguments)
-            .withEnvironment("PATH", invocation.path).withWorkDirectory(root.toFile())
-        assertEquals("sdk:unsaved text", MixFormatter.run(command, "unsaved text").text)
+        val command = ProcessBuilder(listOf(invocation.executable) + invocation.arguments)
+            .directory(root.toFile()).apply { environment()["PATH"] = invocation.path }
+        assertEquals("sdk:unsaved text", MixFormatter.run({ command.start() }, "unsaved text").text)
     }
 
     @Test fun `compiles formatter plugins when necessary without polluting the formatted text`() {
@@ -71,9 +70,9 @@ class MixFormatterTest {
 end
 """)
         Files.writeString(root.resolve(".formatter.exs"), "[plugins: [CustomFormatter]]\n")
-        val command = GeneralCommandLine(mix().absolutePath).withParameters(MixFormatter.arguments("lib/example.ex"))
-            .withWorkDirectory(root.toFile()).withEnvironment("ERL_FLAGS", "+S 2:2")
-        val result = MixFormatter.run(command, "value=1\n")
+        val command = ProcessBuilder(listOf(mix().absolutePath) + MixFormatter.arguments("lib/example.ex"))
+            .directory(root.toFile()).apply { environment()["ERL_FLAGS"] = "+S 2:2" }
+        val result = MixFormatter.run({ command.start() }, "value=1\n")
         assertEquals(result.error, "# plugin applied\nvalue=1\n", result.text)
     }
 

@@ -1,6 +1,5 @@
 package dev.yaee.expert.lang
 
-import com.intellij.execution.configurations.GeneralCommandLine
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
@@ -13,8 +12,8 @@ internal object MixFormatter {
         "--", "--stdin-filename", fileName, "-"
     )
 
-    fun run(command: GeneralCommandLine, text: String, onStarted: (Process) -> Unit = {}): MixFormatResult {
-        val process = command.createProcess()
+    fun run(start: () -> Process, text: String, onStarted: (Process) -> Unit = {}): MixFormatResult {
+        val process = start()
         onStarted(process)
         val readers = Executors.newFixedThreadPool(2)
         try {
