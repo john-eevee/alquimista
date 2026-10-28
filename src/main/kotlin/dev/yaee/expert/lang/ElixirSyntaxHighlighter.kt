@@ -58,13 +58,32 @@ private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
     private fun isDeclaration(word: String): Boolean {
         val text = bufferSequence
         val lineStart = text.lastIndexOf('\n', tokenStart - 1).let { if (it < 0) 0 else it + 1 }
-        if (text.subSequence(lineStart, tokenStart).any { !it.isWhitespace() }) return false
+        val prefix = text.subSequence(lineStart, tokenStart).toString().trimEnd()
+        if (prefix.isNotEmpty() && !prefix.endsWith(';') && !prefix.endsWith("->") && !prefix.endsWith("do:")) return false
         var next = tokenEnd
         while (next < text.length && (text[next] == ' ' || text[next] == '\t')) next++
         if (next == text.length || text[next] == '\n' || text[next] == '\r') return word in BUILTIN_DECLARATIONS
-        if (text[next] == '(') return word in BUILTIN_DECLARATIONS
+        if (text[next] == '(') return word in BUILTIN_DECLARATIONS || hasDoArgument()
         if (next == tokenEnd) return false
-        return text[next].isLetter() || text[next] == '_'
+        if (!text[next].isLetter() && text[next] != '_') return false
+        return word in BUILTIN_DECLARATIONS || hasDoArgument()
+    }
+
+    private fun hasDoArgument(): Boolean {
+        val lexer = ExLexer()
+        lexer.start(bufferSequence, tokenEnd, bufferEnd, 0)
+        var nesting = 0
+        while (lexer.tokenType != null) {
+            when (lexer.tokenType) {
+                EX_DO -> return true
+                EX_KW_IDENTIFIER -> if (bufferSequence.subSequence(lexer.tokenStart, lexer.tokenEnd).toString() == "do:") return true
+                EX_LPAREN, EX_LBRACKET, EX_LBRACE, EX_PERCENT_LBRACE -> nesting++
+                EX_RPAREN, EX_RBRACKET, EX_RBRACE -> if (nesting > 0) nesting--
+                EX_EOL, EX_SEMICOLON, EX_COMMENT -> if (nesting == 0) return false
+            }
+            lexer.advance()
+        }
+        return false
     }
 
     companion object {
