@@ -52,13 +52,29 @@ private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
         val token = super.getTokenType()
         if (token != EX_IDENTIFIER) return token
         val word = bufferSequence.subSequence(tokenStart, tokenEnd).toString()
-        return if (word.startsWith("def") || word in CONTROL_MACROS) HIGHLIGHT_MACRO_KEYWORD else token
+        return if (word in CONTROL_MACROS || (word.startsWith("def") && isDeclaration(word))) HIGHLIGHT_MACRO_KEYWORD else token
+    }
+
+    private fun isDeclaration(word: String): Boolean {
+        val text = bufferSequence
+        val lineStart = text.lastIndexOf('\n', tokenStart - 1).let { if (it < 0) 0 else it + 1 }
+        if (text.subSequence(lineStart, tokenStart).any { !it.isWhitespace() }) return false
+        var next = tokenEnd
+        while (next < text.length && (text[next] == ' ' || text[next] == '\t')) next++
+        if (next == text.length || text[next] == '\n' || text[next] == '\r') return word in BUILTIN_DECLARATIONS
+        if (text[next] == '(') return word in BUILTIN_DECLARATIONS
+        if (next == tokenEnd) return false
+        return text[next].isLetter() || text[next] == '_'
     }
 
     companion object {
         private val CONTROL_MACROS = setOf(
             "case", "with", "if", "unless", "cond", "for", "receive", "try", "quote",
             "alias", "import", "require", "use"
+        )
+        private val BUILTIN_DECLARATIONS = setOf(
+            "def", "defp", "defmodule", "defmacro", "defmacrop", "defguard", "defguardp",
+            "defdelegate", "defexception", "defimpl", "defprotocol", "defstruct", "defoverridable"
         )
     }
 }
