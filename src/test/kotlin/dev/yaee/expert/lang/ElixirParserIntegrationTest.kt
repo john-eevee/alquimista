@@ -39,4 +39,19 @@ class ElixirParserIntegrationTest : ParsingTestCase("", "ex", ElixirParserDefini
         val leaves = PsiTreeUtil.collectElements(file) { it.firstChild == null && it.elementType == EX_IDENTIFIER }
         assertEquals(listOf("test", "property"), leaves.map { it.text }.filter { it == "test" || it == "property" })
     }
+
+    fun testCollectionsStringsAndControlFlow() {
+        val file = parseFile("expressions.ex", """
+            defmodule Sample do
+              def describe(value) do
+                case value do
+                  %{name: name} -> "Hello, #{name}"
+                  _ -> ~s(unknown)
+                end
+              end
+            end
+        """.trimIndent())
+        val errors = PsiTreeUtil.findChildrenOfType(file, PsiErrorElement::class.java)
+        assertTrue("Unexpected parse errors: ${errors.map { it.errorDescription }}", errors.isEmpty())
+    }
 }
