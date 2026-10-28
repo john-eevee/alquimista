@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import dev.yaee.expert.settings.MiseSupport
+import dev.yaee.expert.sdk.MixSdkCommand
 
 internal class RunExUnitTestAction(
     private val relativePath: String,
@@ -19,13 +19,12 @@ internal class RunExUnitTestAction(
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
         val projectRoot = project.basePath ?: return
-        val command = MiseSupport.commandLine("mix", MixTestCommand.arguments(relativePath, line))
-            .withWorkDirectory(projectRoot)
-
         object : Task.Backgroundable(project, "Running $displayName", true) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
+                val arguments = MixTestCommand.arguments(relativePath, line)
                 val result = try {
+                    val command = MixSdkCommand.commandLine(project, arguments).withWorkDirectory(projectRoot)
                     CapturingProcessHandler(command).runProcess()
                 } catch (error: Exception) {
                     LOG.warn("Could not start Mix test process", error)
@@ -34,7 +33,7 @@ internal class RunExUnitTestAction(
                         .notify(project)
                     return
                 }
-                LOG.info("mix ${command.parametersList.parameters.joinToString(" ")} exited ${result.exitCode}:\n${result.stdout}\n${result.stderr}")
+                LOG.info("mix ${arguments.joinToString(" ")} exited ${result.exitCode}:\n${result.stdout}\n${result.stderr}")
                 val type = if (result.exitCode == 0) NotificationType.INFORMATION else NotificationType.ERROR
                 NotificationGroupManager.getInstance().getNotificationGroup("Elixir Expert")
                     .createNotification(

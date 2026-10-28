@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import dev.yaee.expert.settings.MiseSupport
+import dev.yaee.expert.sdk.MixSdkCommand
 
 open class RunMixTaskAction(
     private val title: String,
@@ -24,11 +24,11 @@ open class RunMixTaskAction(
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
         val projectRoot = project.basePath ?: return
-        val command = MiseSupport.commandLine("mix", arguments).withWorkDirectory(projectRoot)
         object : Task.Backgroundable(project, title, true) {
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
                 val result = try {
+                    val command = MixSdkCommand.commandLine(project, arguments).withWorkDirectory(projectRoot)
                     CapturingProcessHandler(command).runProcess()
                 } catch (error: Exception) {
                     LOG.warn("Could not start $title", error)
