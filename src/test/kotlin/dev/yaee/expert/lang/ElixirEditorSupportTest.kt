@@ -1,0 +1,36 @@
+package dev.yaee.expert.lang
+
+import dev.murek.elixirij.lang.*
+import org.junit.Assert.*
+import org.junit.Test
+import javax.xml.parsers.DocumentBuilderFactory
+
+class ElixirEditorSupportTest {
+    @Test fun `line comments use hash and no block comment syntax`() {
+        val commenter = ElixirCommenter()
+        assertEquals("#", commenter.lineCommentPrefix)
+        assertNull(commenter.blockCommentPrefix)
+        assertNull(commenter.blockCommentSuffix)
+    }
+
+    @Test fun `matches Elixir delimiters`() {
+        val pairs = ElixirBraceMatcher().pairs.associate { it.leftBraceType to it.rightBraceType }
+        assertEquals(EX_RPAREN, pairs[EX_LPAREN])
+        assertEquals(EX_RBRACKET, pairs[EX_LBRACKET])
+        assertEquals(EX_RBRACE, pairs[EX_LBRACE])
+        assertEquals(EX_RBRACE, pairs[EX_PERCENT_LBRACE])
+        assertEquals(EX_GT_GT, pairs[EX_LT_LT])
+        assertEquals(EX_INTERPOLATION_END, pairs[EX_INTERPOLATION_START])
+    }
+
+    @Test fun `editor extensions are registered for Elixir`() {
+        val document = javaClass.getResourceAsStream("/META-INF/plugin.xml")!!.use {
+            DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(it)
+        }
+        for (name in listOf("lang.commenter", "lang.braceMatcher")) {
+            val elements = document.getElementsByTagName(name)
+            assertEquals(name, 1, elements.length)
+            assertEquals("Elixir", elements.item(0).attributes.getNamedItem("language").nodeValue)
+        }
+    }
+}
