@@ -18,4 +18,13 @@ class ExUnitLaunchCommandTest {
         assertThrows(IllegalArgumentException::class.java) { ExUnitLaunchCommand.arguments("/tmp/f.exs", null, 1) }
         assertThrows(IllegalArgumentException::class.java) { ExUnitLaunchCommand.arguments("/tmp/f.exs", "test/a.exs", 0) }
     }
+
+    @Test
+    fun `selects an ExUnit module and its containing test file`() {
+        val args = ExUnitLaunchCommand.arguments("/tmp/f.exs", "test/a_test.exs", null, "ExampleTest")
+        assertEquals(listOf("--only", "module:ExampleTest", "test/a_test.exs"), args.takeLast(3))
+        assertThrows(IllegalArgumentException::class.java) {
+            ExUnitLaunchCommand.arguments("/tmp/f.exs", null, null, "ExampleTest")
+        }
+    }
 }
