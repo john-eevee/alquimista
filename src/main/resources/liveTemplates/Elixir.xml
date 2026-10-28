@@ -1,0 +1,41 @@
+<templateSet group="Elixir">
+  <template name="def" value="def ${NAME}(${ARGS}) do\n  $END$\nend" description="Define a public function" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;function_name&quot;" alwaysStopAt="true"/>
+    <variable name="ARGS" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="defp" value="defp ${NAME}(${ARGS}) do\n  $END$\nend" description="Define a private function" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;function_name&quot;" alwaysStopAt="true"/>
+    <variable name="ARGS" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="case" value="case ${EXPR} do\n  ${PATTERN} -&gt;\n    $END$\nend" description="Start a case expression" toReformat="true" toShortenFQNames="false">
+    <variable name="EXPR" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+    <variable name="PATTERN" expression="" defaultValue="&quot;:ok&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="with" value="with {:ok, ${VALUE}} &lt;- ${EXPR} do\n  $END$\nend" description="Start a with expression" toReformat="true" toShortenFQNames="false">
+    <variable name="VALUE" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+    <variable name="EXPR" expression="" defaultValue="&quot;fetch()&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="pipe" value="${EXPR} |&gt; $END$" description="Pipe an expression into the next function" toReformat="true" toShortenFQNames="false">
+    <variable name="EXPR" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="test" value="test &quot;${NAME}&quot; do\n  $END$\nend" description="Define an ExUnit test" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;does something&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="describe" value="describe &quot;${NAME}&quot; do\n  $END$\nend" description="Group related ExUnit tests" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="&quot;feature&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="ok" value="{:ok, ${VALUE}}$END$" description="Return an ok tuple" toReformat="true" toShortenFQNames="false">
+    <variable name="VALUE" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+  <template name="moduledoc" value="@moduledoc &quot;&quot;&quot;\n$END$\n&quot;&quot;&quot;" description="Add a module documentation block" toReformat="true" toShortenFQNames="false">
+    <context><option name="ELIXIR" value="true"/></context>
+  </template>
+</templateSet>

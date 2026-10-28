@@ -44,6 +44,11 @@
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
         <directoryProjectGenerator implementation="dev.yaee.expert.project.ElixirProjectGenerator"/>
         <sdkType implementation="dev.yaee.expert.sdk.ElixirSdkType"/>
+        <defaultLiveTemplates file="/liveTemplates/Elixir.xml"/>
+        <liveTemplateContext contextId="ELIXIR"
+                             implementation="dev.yaee.expert.lang.ElixirLiveTemplateContext"/>
+        <postfixTemplateProvider language="Elixir"
+                                 implementationClass="dev.yaee.expert.lang.ElixirPostfixTemplateProvider"/>
     </extensions>
 
     <actions>
