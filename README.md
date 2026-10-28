@@ -14,7 +14,7 @@ Expert downloads are selected for the current OS and architecture and checked ag
 
 - Expert LSP completion, hover documentation, diagnostics, go to definition, find references, document formatting, symbols, code actions, and code lenses
 - Expert quick fixes, refactorings, source actions, and the `Reindex` command
-- ExUnit test discovery and gutter actions that run `mix test path/to/file_test.exs:line`
+- ExUnit gutter actions for tests, `describe` groups, and modules, with results in the test runner, failure navigation, and rerunning failed tests
 - Tools | Elixir actions for running all Mix tests, formatting the project, and fetching dependencies
 - A Mix project wizard that creates a starter application and ExUnit test
 - A New | Elixir File action for source, script, EEx, and HEEx files
