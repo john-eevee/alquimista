@@ -1,0 +1,37 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+    <id>dev.yaee.expert</id>
+
+    <!-- Public plugin name should be written in Title Case.
+     Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
+    <name>Yaee: Elixir Expert</name>
+
+    <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+    <vendor>Yaee</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
+    <description><![CDATA[
+        Elixir language support for IntelliJ-based IDEs powered by the Expert Language Server.
+        ]]></description>
+
+    <!-- Product and plugin compatibility requirements.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <depends>com.intellij.modules.lsp</depends>
+
+
+    <!-- Extensions defined by the plugin.
+         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="dev.yaee.expert.settings.ExpertSettings"/>
+        <applicationConfigurable
+                parentId="language"
+                instance="dev.yaee.expert.settings.ExpertConfigurable"
+                id="dev.yaee.expert.settings.ExpertConfigurable"
+                displayName="Elixir Expert"/>
+        <platform.lsp.serverSupportProvider
+                implementation="dev.yaee.expert.lsp.ExpertLspServerSupportProvider"/>
+    </extensions>
+
+</idea-plugin>
