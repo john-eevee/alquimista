@@ -18,7 +18,7 @@ Expert downloads are selected for the current OS and architecture and checked ag
 - Tools | Elixir actions for running all Mix tests, formatting the project, and fetching dependencies
 - A Mix project wizard that creates a starter application and ExUnit test
 - An Elixir SDK type for registering an Elixir executable or installation directory
-- Elixir, EEx, and HEEx TextMate grammars
+- Native Elixir syntax highlighting using the active color scheme, plus TextMate grammars for EEx and HEEx
 - Live templates for functions, `case`, `with`, pipelines, ExUnit tests, and module docs
 - Postfix templates for `.inspect`, `.dbg`, `.ok`, `.error`, `.pipe`, and `.if`
 

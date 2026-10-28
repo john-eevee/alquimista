@@ -35,6 +35,8 @@
                 implementation="dev.yaee.expert.lsp.ExpertLspServerSupportProvider"/>
         <lang.parserDefinition language="Elixir"
                           implementationClass="dev.yaee.expert.lang.ElixirParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="Elixir"
+                          implementationClass="dev.yaee.expert.lang.ElixirSyntaxHighlighterFactory"/>
         <fileType name="Elixir"
                   language="Elixir"
                   implementationClass="dev.yaee.expert.lang.ElixirFileType"
