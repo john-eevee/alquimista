@@ -6,6 +6,28 @@ import org.junit.Test
 
 class ExUnitTestDetectorTest {
     @Test
+    fun `detects describe groups and test modules as runnable targets`() {
+        val source = """defmodule ExampleTest do
+  use ExUnit.Case
+  describe "parsing" do
+    test "one" do
+      assert true
+    end
+
+    test "two" do
+      assert true
+    end
+  end
+end
+"""
+        assertEquals(listOf(
+            ExUnitTarget("ExampleTest", 1, ExUnitTargetKind.MODULE),
+            ExUnitTarget("parsing", 3, ExUnitTargetKind.DESCRIBE),
+            ExUnitTarget("parsing: one", 4, ExUnitTargetKind.TEST),
+            ExUnitTarget("parsing: two", 8, ExUnitTargetKind.TEST),
+        ), ExUnitTestDetector.targets(source))
+    }
+    @Test
     fun `detects named tests with describe context and one based lines`() {
         val source = """defmodule ExampleTest do
   describe "parsing" do
