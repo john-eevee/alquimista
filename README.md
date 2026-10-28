@@ -25,6 +25,7 @@ Expert downloads are selected for the current OS and architecture and checked ag
 - Optional Credo warnings in the editor and the Problems window for saved Elixir files
 
 LSP features are presented by the IntelliJ Platform. The available behavior follows the capabilities advertised by the installed Expert release.
+Editor formatting uses Expert's LSP formatter; the separate **Tools | Elixir | Run Mix Format** action formats the project with Mix.
 
 ## Credo and Mix
 

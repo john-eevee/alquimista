@@ -22,4 +22,12 @@ class PluginExtensionRegistrationTest {
         assertEquals(1, document.getElementsByTagName("lang.smartEnterProcessor").length)
         assertEquals(1, document.getElementsByTagName("codeInsight.template.postfixTemplateProvider").length)
     }
+
+    @Test
+    fun `editor formatting is provided by Expert rather than a local formatter`() {
+        val descriptor = javaClass.getResourceAsStream("/META-INF/plugin.xml")!!
+        val document = descriptor.use { DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(it) }
+        assertEquals(1, document.getElementsByTagName("platform.lsp.integrationProvider").length)
+        assertEquals(0, document.getElementsByTagName("formattingService").length)
+    }
 }
