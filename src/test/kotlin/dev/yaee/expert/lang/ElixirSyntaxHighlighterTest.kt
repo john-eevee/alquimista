@@ -1,6 +1,5 @@
 package dev.yaee.expert.lang
 
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.psi.StringEscapesTokenTypes
 import dev.yaee.expert.grammar.*
 import org.junit.Assert.assertArrayEquals
@@ -13,14 +12,14 @@ class ElixirSyntaxHighlighterTest {
     @Test
     fun `tokens use theme language defaults`() {
         val cases = mapOf(
-            EX_DO to DefaultLanguageHighlighterColors.KEYWORD,
-            EX_COMMENT to DefaultLanguageHighlighterColors.LINE_COMMENT,
-            EX_INTEGER to DefaultLanguageHighlighterColors.NUMBER,
-            EX_STRING_PART to DefaultLanguageHighlighterColors.STRING,
-            EX_ATOM to DefaultLanguageHighlighterColors.CONSTANT,
-            EX_PIPE_GT to DefaultLanguageHighlighterColors.OPERATION_SIGN,
-            EX_LPAREN to DefaultLanguageHighlighterColors.PARENTHESES,
-            StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN to DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE,
+            EX_DO to ElixirColors.KEYWORD,
+            EX_COMMENT to ElixirColors.COMMENT,
+            EX_INTEGER to ElixirColors.NUMBER,
+            EX_STRING_PART to ElixirColors.STRING,
+            EX_ATOM to ElixirColors.ATOM,
+            EX_PIPE_GT to ElixirColors.OPERATOR,
+            EX_LPAREN to ElixirColors.PARENTHESES,
+            StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN to ElixirColors.VALID_ESCAPE,
         )
         cases.forEach { (token, key) -> assertArrayEquals(arrayOf(key), highlighter.getTokenHighlights(token)) }
     }
@@ -41,7 +40,7 @@ class ElixirSyntaxHighlighterTest {
         lexer.start(source)
         val highlighted = mutableListOf<String>()
         while (lexer.tokenType != null) {
-            if (highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD)) {
+            if (highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD)) {
                 highlighted += source.substring(lexer.tokenStart, lexer.tokenEnd)
             }
             lexer.advance()
@@ -56,7 +55,7 @@ class ElixirSyntaxHighlighterTest {
         lexer.start(source)
         val found = mutableListOf<String>()
         while (lexer.tokenType != null) {
-            if (highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD)) {
+            if (highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD)) {
                 val word = source.substring(lexer.tokenStart, lexer.tokenEnd)
                 if (word.startsWith("def")) found.add(word)
             }
@@ -70,7 +69,7 @@ class ElixirSyntaxHighlighterTest {
         val lexer = highlighter.highlightingLexer
         lexer.start("case: value, with: value, defmodule: value")
         while (lexer.tokenType != null) {
-            assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD))
+            assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD))
             lexer.advance()
         }
     }
@@ -83,7 +82,7 @@ class ElixirSyntaxHighlighterTest {
         while (lexer.tokenType != null) {
             val tokenText = source.substring(lexer.tokenStart, lexer.tokenEnd)
             if (tokenText == "default" || tokenText == "defcustom") {
-                assertEquals(tokenText, false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD))
+                assertEquals(tokenText, false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD))
             }
             lexer.advance()
         }
@@ -97,7 +96,7 @@ class ElixirSyntaxHighlighterTest {
         val found = mutableListOf<String>()
         while (lexer.tokenType != null) {
             val text = source.substring(lexer.tokenStart, lexer.tokenEnd)
-            if (text.startsWith("def") && highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD)) found += text
+            if (text.startsWith("def") && highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD)) found += text
             lexer.advance()
         }
         assertEquals(listOf("def", "defp", "defmodule"), found)
@@ -111,7 +110,7 @@ class ElixirSyntaxHighlighterTest {
         var count = 0
         while (lexer.tokenType != null) {
             if (source.substring(lexer.tokenStart, lexer.tokenEnd) == "defcustom" &&
-                highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD)) count++
+                highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD)) count++
             lexer.advance()
         }
         assertEquals(3, count)
@@ -124,7 +123,7 @@ class ElixirSyntaxHighlighterTest {
         lexer.start(source)
         while (lexer.tokenType != null) {
             if (source.substring(lexer.tokenStart, lexer.tokenEnd) == "default") {
-                assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(DefaultLanguageHighlighterColors.KEYWORD))
+                assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.KEYWORD))
             }
             lexer.advance()
         }
@@ -132,7 +131,7 @@ class ElixirSyntaxHighlighterTest {
 
     @Test
     fun `module aliases use the theme class reference color`() {
-        assertArrayEquals(arrayOf(DefaultLanguageHighlighterColors.CLASS_REFERENCE), highlighter.getTokenHighlights(EX_ALIAS))
+        assertArrayEquals(arrayOf(ElixirColors.MODULE), highlighter.getTokenHighlights(EX_ALIAS))
     }
 
     @Test
@@ -154,8 +153,8 @@ end"""
             }
             lexer.advance()
         }
-        val declaration = listOf(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION)
-        val call = listOf(DefaultLanguageHighlighterColors.FUNCTION_CALL)
+        val declaration = listOf(ElixirColors.FUNCTION_DECLARATION)
+        val call = listOf(ElixirColors.FUNCTION_CALL)
         assertEquals(listOf(
             "run" to declaration, "value" to emptyList(), "transform" to call, "value" to emptyList(),
             "transform" to declaration, "value" to emptyList(), "map" to call, "value" to emptyList(),
