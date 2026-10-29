@@ -4,7 +4,7 @@
 
 ### Added
 
-- Erlang Observer tool window with scheduler, memory, and I/O charts; process information, tracing, and actions; ETS browsing; and application supervision trees for distributed nodes.
+- Erlang Observer tool window with scheduler, memory, and I/O charts; process information, tracing, and actions; ETS browsing; port, socket, and memory allocator inspection; and application supervision trees for distributed nodes.
 
 - HEEx tag completion, matching-tag highlighting and navigation, indentation, folding, and a structure view.
 
