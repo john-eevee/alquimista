@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id>dev.alquimista.expert</id>
+    <id>ex.alquimista.expert</id>
 
     <!-- Public plugin name should be written in Title Case.
      Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
@@ -26,76 +26,76 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Erlang Observer" anchor="bottom"
-                    factoryClass="dev.alquimista.expert.observer.ObserverToolWindowFactory"/>
-        <applicationService serviceImplementation="dev.alquimista.expert.settings.ExpertSettings"/>
-        <projectService serviceImplementation="dev.alquimista.expert.credo.CredoSettings"/>
-        <projectService serviceImplementation="dev.alquimista.expert.credo.CredoRunner"/>
+                    factoryClass="ex.alquimista.expert.observer.ObserverToolWindowFactory"/>
+        <applicationService serviceImplementation="ex.alquimista.expert.settings.ExpertSettings"/>
+        <projectService serviceImplementation="ex.alquimista.expert.credo.CredoSettings"/>
+        <projectService serviceImplementation="ex.alquimista.expert.credo.CredoRunner"/>
         <projectConfigurable parentId="language"
-                             instance="dev.alquimista.expert.credo.CredoConfigurable"
-                             id="dev.alquimista.expert.credo.settings" displayName="Credo"/>
+                             instance="ex.alquimista.expert.credo.CredoConfigurable"
+                             id="ex.alquimista.expert.credo.settings" displayName="Credo"/>
         <applicationConfigurable
                 parentId="language"
-                instance="dev.alquimista.expert.settings.ExpertConfigurable"
-                id="dev.alquimista.expert.settings.ExpertConfigurable"
+                instance="ex.alquimista.expert.settings.ExpertConfigurable"
+                id="ex.alquimista.expert.settings.ExpertConfigurable"
                 displayName="Elixir Expert"/>
         <platform.lsp.integrationProvider
-                implementation="dev.alquimista.expert.lsp.ExpertLspServerSupportProvider"/>
+                implementation="ex.alquimista.expert.lsp.ExpertLspServerSupportProvider"/>
         <lang.parserDefinition language="Elixir"
-                               implementationClass="dev.alquimista.expert.lang.ElixirParserDefinition"/>
+                               implementationClass="ex.alquimista.expert.lang.ElixirParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Elixir"
-                                       implementationClass="dev.alquimista.expert.lang.ElixirSyntaxHighlighterFactory"/>
-        <lang.parserDefinition language="EEx" implementationClass="dev.alquimista.expert.lang.EexParserDefinition"/>
+                                       implementationClass="ex.alquimista.expert.lang.ElixirSyntaxHighlighterFactory"/>
+        <lang.parserDefinition language="EEx" implementationClass="ex.alquimista.expert.lang.EexParserDefinition"/>
         <lang.syntaxHighlighterFactory language="EEx"
-                                       implementationClass="dev.alquimista.expert.lang.EexSyntaxHighlighterFactory"/>
-        <fileType name="EEx" language="EEx" implementationClass="dev.alquimista.expert.lang.EexFileType"
+                                       implementationClass="ex.alquimista.expert.lang.EexSyntaxHighlighterFactory"/>
+        <fileType name="EEx" language="EEx" implementationClass="ex.alquimista.expert.lang.EexFileType"
                   fieldName="INSTANCE" extensions="eex"/>
-        <lang.parserDefinition language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexParserDefinition"/>
+        <lang.parserDefinition language="HEEx" implementationClass="ex.alquimista.expert.lang.HeexParserDefinition"/>
         <lang.syntaxHighlighterFactory language="HEEx"
-                                       implementationClass="dev.alquimista.expert.lang.HeexSyntaxHighlighterFactory"/>
-        <fileType name="HEEx" language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFileType"
+                                       implementationClass="ex.alquimista.expert.lang.HeexSyntaxHighlighterFactory"/>
+        <fileType name="HEEx" language="HEEx" implementationClass="ex.alquimista.expert.lang.HeexFileType"
                   fieldName="INSTANCE" extensions="heex"/>
-        <colorSettingsPage implementation="dev.alquimista.expert.lang.ElixirColorSettingsPage"/>
-        <colorSettingsPage implementation="dev.alquimista.expert.lang.EexColorSettingsPage"/>
-        <colorSettingsPage implementation="dev.alquimista.expert.lang.HeexColorSettingsPage"/>
+        <colorSettingsPage implementation="ex.alquimista.expert.lang.ElixirColorSettingsPage"/>
+        <colorSettingsPage implementation="ex.alquimista.expert.lang.EexColorSettingsPage"/>
+        <colorSettingsPage implementation="ex.alquimista.expert.lang.HeexColorSettingsPage"/>
         <lang.smartEnterProcessor language="Elixir"
-                                  implementationClass="dev.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
-        <lang.commenter language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirCommenter"/>
-        <lang.braceMatcher language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirBraceMatcher"/>
+                                  implementationClass="ex.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
+        <lang.commenter language="Elixir" implementationClass="ex.alquimista.expert.lang.ElixirCommenter"/>
+        <lang.braceMatcher language="Elixir" implementationClass="ex.alquimista.expert.lang.ElixirBraceMatcher"/>
         <lang.psiStructureViewFactory language="HEEx"
-                                      implementationClass="dev.alquimista.expert.lang.HeexStructureViewFactory"/>
-        <lang.foldingBuilder language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFoldingBuilder"/>
-        <lang.foldingBuilder language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirFoldingBuilder"/>
-        <lineIndentProvider implementation="dev.alquimista.expert.lang.ElixirLineIndentProvider"/>
-        <lineIndentProvider implementation="dev.alquimista.expert.lang.HeexLineIndentProvider"/>
-        <typedHandler implementation="dev.alquimista.expert.lang.HeexTypedHandler"/>
-        <editorFactoryListener implementation="dev.alquimista.expert.lang.HeexMatchingTagEditorListener"/>
-        <externalAnnotator language="Elixir" implementationClass="dev.alquimista.expert.credo.CredoExternalAnnotator"/>
+                                      implementationClass="ex.alquimista.expert.lang.HeexStructureViewFactory"/>
+        <lang.foldingBuilder language="HEEx" implementationClass="ex.alquimista.expert.lang.HeexFoldingBuilder"/>
+        <lang.foldingBuilder language="Elixir" implementationClass="ex.alquimista.expert.lang.ElixirFoldingBuilder"/>
+        <lineIndentProvider implementation="ex.alquimista.expert.lang.ElixirLineIndentProvider"/>
+        <lineIndentProvider implementation="ex.alquimista.expert.lang.HeexLineIndentProvider"/>
+        <typedHandler implementation="ex.alquimista.expert.lang.HeexTypedHandler"/>
+        <editorFactoryListener implementation="ex.alquimista.expert.lang.HeexMatchingTagEditorListener"/>
+        <externalAnnotator language="Elixir" implementationClass="ex.alquimista.expert.credo.CredoExternalAnnotator"/>
         <fileType name="Elixir"
                   language="Elixir"
-                  implementationClass="dev.alquimista.expert.lang.ElixirFileType"
+                  implementationClass="ex.alquimista.expert.lang.ElixirFileType"
                   fieldName="INSTANCE"
                   extensions="ex;exs"/>
-        <fileIconProvider implementation="dev.alquimista.expert.lang.ElixirFileIconProvider"/>
+        <fileIconProvider implementation="ex.alquimista.expert.lang.ElixirFileIconProvider"/>
         <runLineMarkerContributor language="Elixir"
-                                  implementationClass="dev.alquimista.expert.testing.ExUnitRunLineMarkerContributor"/>
-        <configurationType implementation="dev.alquimista.expert.testing.ExUnitConfigurationType"/>
+                                  implementationClass="ex.alquimista.expert.testing.ExUnitRunLineMarkerContributor"/>
+        <configurationType implementation="ex.alquimista.expert.testing.ExUnitConfigurationType"/>
         <notificationGroup id="Elixir Expert" displayType="BALLOON"/>
-        <directoryProjectGenerator implementation="dev.alquimista.expert.project.ElixirProjectGenerator"/>
-        <sdkType implementation="dev.alquimista.expert.sdk.ElixirSdkType"/>
+        <directoryProjectGenerator implementation="ex.alquimista.expert.project.ElixirProjectGenerator"/>
+        <sdkType implementation="ex.alquimista.expert.sdk.ElixirSdkType"/>
         <defaultLiveTemplates file="/liveTemplates/Elixir.xml"/>
         <liveTemplateContext contextId="ELIXIR"
-                             implementation="dev.alquimista.expert.lang.ElixirLiveTemplateContext"/>
+                             implementation="ex.alquimista.expert.lang.ElixirLiveTemplateContext"/>
         <codeInsight.template.postfixTemplateProvider language="Elixir"
-                                                      implementationClass="dev.alquimista.expert.lang.ElixirPostfixTemplateProvider"/>
+                                                      implementationClass="ex.alquimista.expert.lang.ElixirPostfixTemplateProvider"/>
     </extensions>
 
     <actions>
         <action id="Alquimista.GoToMatchingHeexTag"
-                class="dev.alquimista.expert.lang.HeexGoToMatchingTagAction"
+                class="ex.alquimista.expert.lang.HeexGoToMatchingTagAction"
                 text="Go to Matching HEEx Tag"
                 description="Move the caret to the matching HEEx tag"/>
         <action id="ElixirExpert.NewFile"
-                class="dev.alquimista.expert.project.CreateElixirFileAction"
+                class="ex.alquimista.expert.project.CreateElixirFileAction"
                 text="Elixir File"
                 description="Create an Elixir source, script, or template file">
             <add-to-group group-id="NewGroup" anchor="last"/>
@@ -103,13 +103,13 @@
         <group id="ElixirExpert.ToolsMenu" text="Elixir" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="ElixirExpert.RunMixTests"
-                    class="dev.alquimista.expert.testing.RunMixTestsAction"
+                    class="ex.alquimista.expert.testing.RunMixTestsAction"
                     text="Run Mix Tests"/>
             <action id="ElixirExpert.MixFormat"
-                    class="dev.alquimista.expert.testing.MixFormatAction"
+                    class="ex.alquimista.expert.testing.MixFormatAction"
                     text="Run Mix Format"/>
             <action id="ElixirExpert.MixDepsGet"
-                    class="dev.alquimista.expert.testing.MixDepsGetAction"
+                    class="ex.alquimista.expert.testing.MixDepsGetAction"
                     text="Fetch Mix Dependencies"/>
         </group>
     </actions>

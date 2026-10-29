@@ -1,0 +1,153 @@
+package ex.alquimista.expert.observer
+
+import org.junit.Assert.*
+import org.junit.Test
+
+class ObserverSnapshotTest {
+    @Test fun `parses system information and process rows`() {
+        val snapshot = ObserverSnapshot.parse("OK\tmyapp@host\t29\t4096\t3\nP\t<0.1.0>\td29ya2Vy\t2048\t5\t100\n")
+        assertEquals("myapp@host", snapshot.node)
+        assertEquals("29", snapshot.otpRelease)
+        assertEquals(4096L, snapshot.memoryBytes)
+        assertEquals(3, snapshot.processCount)
+        assertEquals("worker", snapshot.processes.single().name)
+        assertEquals(2048L, snapshot.processes.single().memoryBytes)
+    }
+
+    @Test fun `reports unreachable nodes`() {
+        val exception = assertThrows(IllegalStateException::class.java) { ObserverSnapshot.parse("ERROR\tunreachable\n") }
+        assertTrue(exception.message!!.contains("unreachable"))
+    }
+
+    @Test fun `rejects invalid node names`() {
+        assertFalse(ObserverConnection.isValidNode("bad name@host"))
+        assertFalse(ObserverConnection.isValidNode("missing-host"))
+        assertTrue(ObserverConnection.isValidNode("my_app@localhost"))
+    }
+    @Test fun `tool window is registered`() {
+        val document = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+            .parse(java.io.File("src/main/resources/META-INF/plugin.xml"))
+        val windows = document.getElementsByTagName("toolWindow")
+        assertTrue((0 until windows.length).any {
+            val element = windows.item(it) as org.w3c.dom.Element
+            element.getAttribute("id") == "Erlang Observer" &&
+                element.getAttribute("factoryClass") == ObserverToolWindowFactory::class.java.name
+        })
+    }
+
+    @Test fun `rejects malformed response and cookie with line breaks`() {
+        assertThrows(IllegalArgumentException::class.java) { ObserverSnapshot.parse("OK\tnode\t29\tbad\t1\n") }
+        assertThrows(IllegalArgumentException::class.java) {
+            ObserverConnection.open(listOf("erl"), "app@host", "bad\ncookie", false)
+        }
+    }
+
+    @Test fun `parses memory categories and io counters for load charts`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nM\t2000\t100\t200\t300\t400\t1024\t2048\n")
+        assertEquals(2000L, snapshot.metrics.processMemory)
+        assertEquals(100L, snapshot.metrics.atomMemory)
+        assertEquals(200L, snapshot.metrics.binaryMemory)
+        assertEquals(300L, snapshot.metrics.codeMemory)
+        assertEquals(400L, snapshot.metrics.etsMemory)
+        assertEquals(1024L, snapshot.metrics.inputBytes)
+        assertEquals(2048L, snapshot.metrics.outputBytes)
+    }
+
+    @Test fun `chart history computes rates and handles counter reset`() {
+        val history = ObserverHistory(2)
+        fun sample(input: Long, output: Long) = ObserverSnapshot("node", "29", 4096, 1, emptyList(), ObserverMetrics(processMemory = 512, atomMemory = 64, binaryMemory = 32, codeMemory = 128, etsMemory = 256, inputBytes = input, outputBytes = output))
+        history.add(1000, sample(100, 200))
+        history.add(3000, sample(300, 600))
+        assertEquals(512, history.samples.last().metrics.processMemory)
+        assertEquals(256, history.samples.last().metrics.etsMemory)
+        assertEquals(100, history.samples.last().inputPerSecond)
+        assertEquals(200, history.samples.last().outputPerSecond)
+        history.add(4000, sample(10, 20))
+        assertEquals(2, history.samples.size)
+        assertEquals(0, history.samples.last().inputPerSecond)
+        history.clear()
+        assertTrue(history.samples.isEmpty())
+    }
+
+    @Test fun `parses ETS tables including opaque table identifier`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nT\tdGFibGU=\tYWJj\tPDAuMS4wPg==\t7\t128\tcHVibGlj\tc2V0\n")
+        val table = snapshot.tables.single()
+        assertEquals("table", table.name)
+        assertEquals("abc", table.id)
+        assertEquals("<0.1.0>", table.owner)
+        assertEquals(7L, table.size)
+        assertEquals(128L, table.memoryWords)
+        assertEquals("public", table.protection)
+        assertEquals("set", table.type)
+    }
+
+    @Test fun `parses supervision tree links`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nS\tYXBw\t\tYXBw\t\tYXBwbGljYXRpb24=\nS\tYXBwLzA=\tYXBw\tcm9vdA==\tPDAuMS4wPg==\tc3VwZXJ2aXNvcg==\n")
+        assertEquals(2, snapshot.supervision.size)
+        assertEquals("app", snapshot.supervision[1].parentId)
+        assertEquals("root", snapshot.supervision[1].label)
+        assertEquals("<0.1.0>", snapshot.supervision[1].pid)
+    }
+
+    @Test fun `parses scheduler counters for utilization charts`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nQ\t1\t500\t1000\nQ\t2\t100\t500\n")
+        assertEquals(2, snapshot.schedulers.size)
+        assertEquals(1, snapshot.schedulers[0].id)
+        assertEquals(500L, snapshot.schedulers[0].active)
+        assertEquals(1000L, snapshot.schedulers[0].total)
+    }
+
+    @Test fun `scheduler utilization uses counter deltas and handles resets`() {
+        val history = ObserverHistory()
+        fun sample(active: Long, total: Long) = ObserverSnapshot("node", "29", 0, 0, emptyList(), schedulers = listOf(SchedulerCounters(1, active, total)))
+        history.add(1000, sample(50, 100))
+        history.add(2000, sample(100, 200))
+        assertEquals(50L, history.samples.last().schedulerPercent)
+        history.add(3000, sample(1, 2))
+        assertEquals(0L, history.samples.last().schedulerPercent)
+    }
+
+    @Test fun `parses port information`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nR\tI1BvcnQ8MC4xPg==\tY2F0\tPDAuMS4wPg==\t12\t34\t5\tZGV0YWlscw==\n")
+        val port = snapshot.ports.single()
+        assertEquals("#Port<0.1>", port.id)
+        assertEquals("cat", port.name)
+        assertEquals("<0.1.0>", port.owner)
+        assertEquals(12L, port.inputBytes)
+        assertEquals(34L, port.outputBytes)
+        assertEquals(5L, port.queueBytes)
+        assertEquals("details", port.details)
+    }
+
+    @Test fun `parses socket information`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nK\tc29ja2V0\tMTc=\tPDAuMS4wPg==\taW5ldA==\tc3RyZWFt\tdGNw\tW10=\tW10=\tZGV0YWlscw==\n")
+        val socket = snapshot.sockets.single()
+        assertEquals("socket", socket.id)
+        assertEquals("17", socket.fd)
+        assertEquals("<0.1.0>", socket.owner)
+        assertEquals("inet", socket.domain)
+        assertEquals("stream", socket.type)
+        assertEquals("tcp", socket.protocol)
+        assertEquals("details", socket.details)
+    }
+
+    @Test fun `parses memory allocator sizes`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nA\tc3RkX2FsbG9j\t512\t1024\tZGV0YWlscw==\n")
+        val allocator = snapshot.allocators.single()
+        assertEquals("std_alloc", allocator.name)
+        assertEquals(512L, allocator.blockBytes)
+        assertEquals(1024L, allocator.carrierBytes)
+        assertEquals("details", allocator.details)
+    }
+
+    @Test fun `tracks peak allocator carrier sizes per session`() {
+        val peaks = AllocatorPeaks()
+        assertEquals(200L, peaks.observe("std_alloc", 200))
+        assertEquals(200L, peaks.observe("std_alloc", 100))
+        assertEquals(300L, peaks.observe("std_alloc", 300))
+        assertEquals(30L, peaks.observe("temp_alloc", 30))
+        peaks.clear()
+        assertEquals(10L, peaks.observe("std_alloc", 10))
+    }
+
+}
