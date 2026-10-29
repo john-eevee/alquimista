@@ -131,4 +131,23 @@ class ObserverSnapshotTest {
         assertEquals("details", socket.details)
     }
 
+    @Test fun `parses memory allocator sizes`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nA\tc3RkX2FsbG9j\t512\t1024\tZGV0YWlscw==\n")
+        val allocator = snapshot.allocators.single()
+        assertEquals("std_alloc", allocator.name)
+        assertEquals(512L, allocator.blockBytes)
+        assertEquals(1024L, allocator.carrierBytes)
+        assertEquals("details", allocator.details)
+    }
+
+    @Test fun `tracks peak allocator carrier sizes per session`() {
+        val peaks = AllocatorPeaks()
+        assertEquals(200L, peaks.observe("std_alloc", 200))
+        assertEquals(200L, peaks.observe("std_alloc", 100))
+        assertEquals(300L, peaks.observe("std_alloc", 300))
+        assertEquals(30L, peaks.observe("temp_alloc", 30))
+        peaks.clear()
+        assertEquals(10L, peaks.observe("std_alloc", 10))
+    }
+
 }

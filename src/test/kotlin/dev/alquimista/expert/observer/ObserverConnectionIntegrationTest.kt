@@ -37,6 +37,7 @@ class ObserverConnectionIntegrationTest {
             assertTrue("Expected real ETS memory metrics", initial.metrics.etsMemory > 0)
             assertTrue("Expected real ETS tables", initial.tables.isNotEmpty())
             assertTrue("Expected real ports", initial.ports.isNotEmpty())
+            assertTrue("Expected real memory allocators", initial.allocators.any { it.carrierBytes > 0 && it.name.isNotBlank() })
             assertTrue("Expected the test socket", initial.sockets.any { it.domain == "inet" && it.type == "stream" && it.protocol == "tcp" })
             assertTrue("Expected applications and supervisors", initial.supervision.any { it.kind == "supervisor" })
             val session = ObserverConnection.open(listOf(executable.absolutePath), "$node@$host", cookie, false)

@@ -57,6 +57,9 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
     private lateinit var processTable: JTable
     private val portsView = ObserverDetailsTable<ObservedPort>(arrayOf("Port", "Name", "Owner", "Input bytes", "Output bytes", "Queue bytes"), { arrayOf(it.id, it.name, it.owner, it.inputBytes, it.outputBytes, it.queueBytes) }, { it.details })
     private val socketsView = ObserverDetailsTable<ObservedSocket>(arrayOf("Socket", "FD", "Owner", "Domain", "Type", "Protocol", "Read state", "Write state"), { arrayOf(it.id, it.fd, it.owner, it.domain, it.type, it.protocol, it.readState, it.writeState) }, { it.details })
+    private val allocatorPeaks = AllocatorPeaks()
+    private data class AllocatorRow(val allocator: ObservedAllocator, val peak: Long)
+    private val allocatorsView = ObserverDetailsTable<AllocatorRow>(arrayOf("Allocator", "Block bytes", "Carrier bytes", "Peak carrier bytes"), { arrayOf(it.allocator.name, it.allocator.blockBytes, it.allocator.carrierBytes, it.peak) }, { it.allocator.details })
     private val charts = ObserverCharts()
     private val treeRoot = javax.swing.tree.DefaultMutableTreeNode("Applications")
     private val treeModel = javax.swing.tree.DefaultTreeModel(treeRoot)
@@ -148,7 +151,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                 add(JButton("Clear").apply { addActionListener { traceText.text = "" } })
             }, BorderLayout.SOUTH)
         }
-        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", etsPanel); addTab("Ports", portsView); addTab("Sockets", socketsView); addTab("Applications", JScrollPane(tree)); addTab("Trace", tracePanel) }
+        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", etsPanel); addTab("Ports", portsView); addTab("Sockets", socketsView); addTab("Memory allocators", allocatorsView); addTab("Applications", JScrollPane(tree)); addTab("Trace", tracePanel) }
         panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
@@ -202,6 +205,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                         }
                         portsView.update(snapshot.ports)
                         socketsView.update(snapshot.sockets)
+                        allocatorsView.update(snapshot.allocators.map { AllocatorRow(it, allocatorPeaks.observe(it.name, it.carrierBytes)) })
                         charts.add(snapshot)
                         val expanded = tree.getExpandedDescendants(javax.swing.tree.TreePath(treeRoot.path))?.toList()
                             ?.mapNotNull { ((it.lastPathComponent as? javax.swing.tree.DefaultMutableTreeNode)?.userObject as? TreeEntry)?.item?.id }
@@ -334,7 +338,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
-        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; processes = emptyList(); tables = emptyList(); treeRoot.removeAllChildren(); treeModel.reload(); charts.clear(); portsView.clear(); socketsView.clear()
+        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; processes = emptyList(); tables = emptyList(); treeRoot.removeAllChildren(); treeModel.reload(); charts.clear(); portsView.clear(); socketsView.clear(); allocatorsView.clear(); allocatorPeaks.clear()
     }
 
     override fun dispose() {

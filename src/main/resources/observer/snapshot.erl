@@ -179,6 +179,27 @@ case net_adm:ping(Target) of
           (_) -> ok end, SocketList);
           _ -> ok
         end,
+        AllocTypes = Call(system_info, [alloc_util_allocators]),
+        Allocators = case is_list(AllocTypes) of true -> Call(system_info, [{allocator_sizes, AllocTypes}]); false -> [] end,
+        CurrentValue = fun(Key, Entries) ->
+          case lists:keyfind(Key, 1, Entries) of Entry when is_tuple(Entry), tuple_size(Entry) >= 2, is_integer(element(2, Entry)) -> element(2, Entry); _ -> 0 end
+        end,
+        case Allocators of
+          AllocList when is_list(AllocList) -> lists:foreach(fun({AllocName, Instances}) when is_list(Instances) ->
+            {Blocks, Carriers} = lists:foldl(fun({instance, _, Groups}, {BlockSum, CarrierSum}) ->
+              lists:foldl(fun({_, Entries}, {B, C}) when is_list(Entries) ->
+                TypedBlocks = proplists:get_value(blocks, Entries, []),
+                Size = case is_list(TypedBlocks) of
+                  true -> lists:sum([CurrentValue(size, BlockInfo) || {_, BlockInfo} <- TypedBlocks, is_list(BlockInfo)]);
+                  false -> 0
+                end,
+                {B + Size + CurrentValue(blocks_size, Entries), C + CurrentValue(carriers_size, Entries)};
+                (_, Acc) -> Acc end, {BlockSum, CarrierSum}, Groups);
+              (_, Acc) -> Acc end, {0, 0}, Instances),
+            io:format("A\t~s\t~B\t~B\t~s~n", [Encode(AllocName), Blocks, Carriers, B64(unicode:characters_to_binary(io_lib:format("~P", [Instances, 12])))]);
+          (_) -> ok end, AllocList);
+          _ -> ok
+        end,
         Tables = rpc:call(Target, ets, all, [], 5000),
         case Tables of
           Ts when is_list(Ts) -> lists:foreach(fun(Tid) ->
