@@ -40,6 +40,10 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         override fun getColumnClass(columnIndex: Int): Class<*> =
             if (columnIndex >= 2) java.lang.Long::class.java else String::class.java
     }
+    private val tableModel = object : DefaultTableModel(arrayOf("Name", "Identifier", "Owner", "Objects", "Memory (words)", "Protection", "Type"), 0) {
+        override fun isCellEditable(row: Int, column: Int) = false
+        override fun getColumnClass(columnIndex: Int): Class<*> = if (columnIndex == 3 || columnIndex == 4) java.lang.Long::class.java else String::class.java
+    }
     private val executor = Executors.newSingleThreadScheduledExecutor { task ->
         Thread(task, "Alquimista Observer").apply {
             isDaemon = true
@@ -63,7 +67,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
             JPanel(BorderLayout()).apply { add(controls, BorderLayout.NORTH); add(information, BorderLayout.SOUTH) }
         val table = JTable(model).apply { autoCreateRowSorter = true }
         panel.add(top, BorderLayout.NORTH)
-        val tabs = JTabbedPane().apply { addTab("Processes", JScrollPane(table)); addTab("Load charts", charts) }
+        val etsTable = JTable(tableModel).apply { autoCreateRowSorter = true }
+        val tabs = JTabbedPane().apply { addTab("Processes", JScrollPane(table)); addTab("Load charts", charts); addTab("ETS", JScrollPane(etsTable)) }
         panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
@@ -111,6 +116,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                         summary.text =
                             "OTP ${snapshot.otpRelease}   |   Memory: ${snapshot.memoryBytes} bytes   |   Processes: ${snapshot.processCount}"
                         charts.add(snapshot)
+                        tableModel.rowCount = 0
+                        snapshot.tables.forEach { tableModel.addRow(arrayOf<Any>(it.name, it.id, it.owner, it.size, it.memoryWords, it.protection, it.type)) }
                         model.rowCount = 0
                         snapshot.processes.forEach {
                             model.addRow(
@@ -148,7 +155,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
-        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; charts.clear()
+        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; charts.clear()
     }
 
     override fun dispose() {

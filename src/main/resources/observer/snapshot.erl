@@ -23,6 +23,18 @@ case net_adm:ping(Target) of
             io:format("M\t~B\t~B\t~B\t~B\t~B\t~B\t~B~n", [proplists:get_value(processes, Ms, 0), proplists:get_value(atom, Ms, 0), proplists:get_value(binary, Ms, 0), proplists:get_value(code, Ms, 0), proplists:get_value(ets, Ms, 0), In, Out]);
           _ -> ok
         end,
+        Encode = fun(Term) -> base64:encode(unicode:characters_to_binary(io_lib:format("~tp", [Term]))) end,
+        Tables = rpc:call(Target, ets, all, [], 5000),
+        case Tables of
+          Ts when is_list(Ts) -> lists:foreach(fun(Tid) ->
+            case rpc:call(Target, ets, info, [Tid], 5000) of
+              Info when is_list(Info) ->
+                io:format("T\t~s\t~s\t~s\t~B\t~B\t~s\t~s~n", [Encode(proplists:get_value(name, Info)), Encode(Tid), Encode(proplists:get_value(owner, Info)), proplists:get_value(size, Info, 0), proplists:get_value(memory, Info, 0), Encode(proplists:get_value(protection, Info)), Encode(proplists:get_value(type, Info))]);
+              _ -> ok
+            end
+          end, Ts);
+          _ -> ok
+        end,
         lists:foreach(fun(Pid) ->
           case Call(process_info, [Pid, [registered_name, memory, message_queue_len, reductions]]) of
             Info when is_list(Info) ->

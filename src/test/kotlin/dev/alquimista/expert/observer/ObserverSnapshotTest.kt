@@ -67,4 +67,16 @@ class ObserverSnapshotTest {
         assertTrue(history.samples.isEmpty())
     }
 
+    @Test fun `parses ETS tables including opaque table identifier`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nT\tdGFibGU=\tYWJj\tPDAuMS4wPg==\t7\t128\tcHVibGlj\tc2V0\n")
+        val table = snapshot.tables.single()
+        assertEquals("table", table.name)
+        assertEquals("abc", table.id)
+        assertEquals("<0.1.0>", table.owner)
+        assertEquals(7L, table.size)
+        assertEquals(128L, table.memoryWords)
+        assertEquals("public", table.protection)
+        assertEquals("set", table.type)
+    }
+
 }

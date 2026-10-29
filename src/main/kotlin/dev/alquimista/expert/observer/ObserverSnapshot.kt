@@ -13,6 +13,8 @@ data class ObservedProcess(
     val reductions: Long
 )
 
+data class ObservedTable(val name: String, val id: String, val owner: String, val size: Long, val memoryWords: Long, val protection: String, val type: String)
+
 data class ObserverMetrics(
     val processMemory: Long = 0,
     val atomMemory: Long = 0,
@@ -30,6 +32,7 @@ data class ObserverSnapshot(
     val processCount: Int,
     val processes: List<ObservedProcess>,
     val metrics: ObserverMetrics = ObserverMetrics(),
+    val tables: List<ObservedTable> = emptyList(),
 ) {
     companion object {
         fun parse(output: String): ObserverSnapshot {
@@ -55,7 +58,13 @@ data class ObserverSnapshot(
                 require(values.size == 8) { "Invalid Observer metrics response" }
                 ObserverMetrics(values[1].toLong(), values[2].toLong(), values[3].toLong(), values[4].toLong(), values[5].toLong(), values[6].toLong(), values[7].toLong())
             } ?: ObserverMetrics()
-            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics)
+            fun decode(value: String) = String(Base64.getDecoder().decode(value), Charsets.UTF_8)
+            val tables = lines.filter { it.startsWith("T\t") }.map { line ->
+                val row = line.split('\t')
+                require(row.size == 8) { "Invalid Observer table response" }
+                ObservedTable(decode(row[1]), decode(row[2]), decode(row[3]), row[4].toLong(), row[5].toLong(), decode(row[6]), decode(row[7]))
+            }
+            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables)
         }
     }
 }
