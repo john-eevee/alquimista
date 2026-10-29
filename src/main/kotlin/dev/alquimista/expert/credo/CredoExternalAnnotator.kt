@@ -3,7 +3,6 @@ package dev.alquimista.expert.credo
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
@@ -21,8 +20,6 @@ class CredoExternalAnnotator : ExternalAnnotator<CredoInput, CredoResult>() {
         project.getService(CredoRunner::class.java)
         val virtualFile = file.virtualFile ?: return null
         if (virtualFile.extension !in setOf("ex", "exs")) return null
-        val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
-        if (document != null && FileDocumentManager.getInstance().isDocumentUnsaved(document)) return null
         val root = project.basePath?.let(Paths::get)?.toAbsolutePath()?.normalize() ?: return null
         val path = Paths.get(virtualFile.path).toAbsolutePath().normalize()
         val mixRoot = CredoProject.findMixRoot(root, path) ?: return null

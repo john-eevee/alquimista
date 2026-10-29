@@ -18,7 +18,7 @@ Elixir support for IntelliJ-based IDEs, powered by the [Expert language server](
 
 - Expert supplies completion, hover documentation, diagnostics, navigation, references, symbols, formatting, code actions, and code lenses through IntelliJ's LSP integration. Available behavior depends on the installed Expert release.
 - Expert quick fixes, refactorings, source actions, and the `Reindex` command are available through IntelliJ.
-- Optional Credo diagnostics appear in the editor and the Problems window for saved Elixir files.
+- Optional Credo diagnostics appear in the editor and the Problems window for Elixir files, including unsaved edits.
 
 ### Projects and tests
 
@@ -44,7 +44,7 @@ The Expert runtime overrides apply to the language server; the selected Elixir S
 
 ### Credo
 
-Credo is disabled by default. Add it to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Alquimista checks and caches whether Credo is available, and analyzes saved `.ex` and `.exs` files.
+Credo is disabled by default. Add it to the Mix project's dependencies, run `mix deps.get`, and enable **Settings | Languages & Frameworks | Credo** for the project. Alquimista checks and caches whether Credo is available, and analyzes `.ex` and `.exs` buffers without saving them.
 
 ## Upgrading from the previous plugin
 

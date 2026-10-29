@@ -47,4 +47,21 @@ class CredoEngineTest {
         fails.analyze(true, "config", "lib/a.ex", "v2")
         assertEquals(3, calls)
     }
+    @Test fun `analyzes the current buffer over stdin and caches by revision`() {
+        val calls = mutableListOf<Pair<List<String>, String>>()
+        val engine = CredoEngine(
+            { args -> if (args == listOf("deps")) "* credo 1.7\n  ok" else null },
+            { args, input ->
+                calls += args to input
+                """{"issues":[{"filename":"lib/a.ex","line_no":1,"message":"unsaved finding"}]}"""
+            },
+        )
+        val text = "IO.inspect(:unsaved)"
+        assertEquals("unsaved finding", engine.analyze(true, "config", "lib/a.ex", text, text)!!.single().message)
+        engine.analyze(true, "config", "lib/a.ex", text, text)
+        assertEquals(1, calls.size)
+        assertEquals(text, calls.single().second)
+        assertTrue(calls.single().first.contains("--read-from-stdin"))
+        assertTrue(calls.single().first.contains("lib/a.ex"))
+    }
 }

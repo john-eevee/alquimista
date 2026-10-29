@@ -64,12 +64,22 @@ class CredoRunner(private val project: Project) {
     fun analyze(root: Path, mixRoot: Path, file: Path, sdkKey: String, revision: String): List<CredoIssue>? {
         if (project.isDisposed || !CredoSettings.getInstance(project).state.enabled) return null
         val engine = engines.computeIfAbsent(mixRoot) { directory ->
-            CredoEngine { arguments ->
-                try {
+            fun execute(arguments: List<String>, input: String?): String? {
+                return try {
                     val command = MixSdkCommand.commandLine(project, arguments)
                         .withWorkDirectory(directory.toFile())
                         .withEnvironment("NO_COLOR", "1")
-                    val result = CapturingProcessHandler(command).runProcess(120_000, true)
+                    val handler = CapturingProcessHandler(command)
+                    if (input != null) {
+                        Thread({
+                            try {
+                                handler.processInput.bufferedWriter(Charsets.UTF_8).use { it.write(input) }
+                            } catch (error: java.io.IOException) {
+                                LOG.warn("Could not write the Credo input", error)
+                            }
+                        }, "Alquimista Credo stdin").apply { isDaemon = true; start() }
+                    }
+                    val result = handler.runProcess(120_000, true)
                     if (result.isTimeout || result.isCancelled || result.exitCode != 0) {
                         LOG.warn("Credo command failed: ${result.stderr.takeLast(1000)}")
                         null
@@ -79,9 +89,10 @@ class CredoRunner(private val project: Project) {
                     null
                 }
             }
+            CredoEngine({ arguments -> execute(arguments, null) }, { arguments, input -> execute(arguments, input) })
         }
         val relative = mixRoot.relativize(file).toString()
-        return engine.analyze(true, CredoProject.fingerprint(root, mixRoot, sdkKey), relative, revision)
+        return engine.analyze(true, CredoProject.fingerprint(root, mixRoot, sdkKey), relative, revision, revision)
     }
 
     companion object {

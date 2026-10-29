@@ -10,7 +10,7 @@
 - Native Elixir, HEEx, and EEx syntax highlighting with theme-aware color settings.
 - Elixir bracket matching, comments, indentation, folding, and Complete Current Statement for delimiters and `do` blocks.
 - ExUnit gutter actions for tests, `describe` groups, and modules, with test runner results, failure navigation, and rerunning failed tests.
-- Optional Credo diagnostics for saved Elixir files in the editor and Problems window.
+- Optional Credo diagnostics for Elixir files, including unsaved edits, in the editor and Problems window.
 - A Mix project wizard, Elixir SDK support, Mix actions, and file templates for Elixir and template files.
 - Theme-aware Elixir file icons, live templates, and postfix templates.
 
