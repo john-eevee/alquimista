@@ -4,7 +4,7 @@
 
 ### Added
 
-- HEEx tag completion, indentation, folding, matching-tag navigation, and a structure view.
+- HEEx tag completion, matching-tag highlighting and navigation, indentation, folding, and a structure view.
 
 - Expert settings for workspace symbols, logging, runtime and source paths, dependency fetching, and compile-on-type.
 

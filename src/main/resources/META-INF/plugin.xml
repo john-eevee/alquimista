@@ -61,6 +61,7 @@
         <lineIndentProvider implementation="dev.alquimista.expert.lang.ElixirLineIndentProvider"/>
         <lineIndentProvider implementation="dev.alquimista.expert.lang.HeexLineIndentProvider"/>
         <typedHandler implementation="dev.alquimista.expert.lang.HeexTypedHandler"/>
+        <editorFactoryListener implementation="dev.alquimista.expert.lang.HeexMatchingTagEditorListener"/>
         <externalAnnotator language="Elixir" implementationClass="dev.alquimista.expert.credo.CredoExternalAnnotator"/>
         <fileType name="Elixir"
                   language="Elixir"

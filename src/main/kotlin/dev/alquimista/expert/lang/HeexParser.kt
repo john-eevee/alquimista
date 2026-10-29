@@ -43,14 +43,14 @@ class HeexParser : PsiParser {
                 builder.advanceLexer()
             }
             if (closing) {
-                val match = stack.indexOfLast { it.name.equals(name, ignoreCase = true) }
+                val match = stack.indexOfLast { it.name == name }
                 if (ending != null && match >= 0) {
                     while (stack.lastIndex > match) stack.removeAt(stack.lastIndex).marker.drop()
                     stack.removeAt(stack.lastIndex).marker.done(HEEX_ELEMENT)
                 }
             } else if (ending == null) {
                 marker!!.drop()
-            } else if (ending == "/>" || name.lowercase() in HEEX_VOID_TAGS) {
+            } else if (ending == "/>" || name in HEEX_VOID_TAGS) {
                 marker!!.done(HEEX_ELEMENT)
             } else {
                 stack.add(OpenTag(name, marker!!))

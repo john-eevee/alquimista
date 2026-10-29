@@ -97,9 +97,9 @@ class HeexLexer : LexerBase() {
         var pos = 0
         while (pos < end) {
             val noCurly = stack.lastOrNull()?.noCurly == true
-            val rawTag = stack.lastOrNull()?.name?.lowercase()?.takeIf { it == "script" || it == "style" }
+            val rawTag = stack.lastOrNull()?.name?.takeIf { it == "script" || it == "style" }
             val closesRaw = rawTag != null && pos + rawTag.length + 2 <= end &&
-                text.subSequence(pos, pos + rawTag.length + 2).toString().equals("</$rawTag", true) &&
+                text.subSequence(pos, pos + rawTag.length + 2).toString() == "</$rawTag" &&
                 (pos + rawTag.length + 2 == end || text[pos + rawTag.length + 2].let { it.isWhitespace() || it == '>' })
             when {
                 starts(pos, "<%!--") -> pos = comment(pos, "--%>")
@@ -118,7 +118,7 @@ class HeexLexer : LexerBase() {
                     if (pos == nameStart) continue
                     val name = text.subSequence(nameStart, pos).toString()
                     emit(nameStart, pos, HEEX_TAG_NAME)
-                    var disabled = noCurly || name.equals("script", true) || name.equals("style", true)
+                    var disabled = noCurly || name == "script" || name == "style"
                     var selfClosing = false
                     var closed = false
                     while (pos < end) {
@@ -152,9 +152,9 @@ class HeexLexer : LexerBase() {
                     }
                     if (closed) {
                         if (closing) {
-                            val match = stack.indexOfLast { it.name.equals(name, true) }
+                            val match = stack.indexOfLast { it.name == name }
                             if (match >= 0) while (stack.size > match) stack.removeAt(stack.lastIndex)
-                        } else if (!selfClosing && name.lowercase() !in HEEX_VOID_TAGS) stack.add(Tag(name, disabled))
+                        } else if (!selfClosing && name !in HEEX_VOID_TAGS) stack.add(Tag(name, disabled))
                     }
                 }
                 text[pos] == '&' -> {

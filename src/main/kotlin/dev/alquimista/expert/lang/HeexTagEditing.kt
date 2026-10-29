@@ -38,7 +38,7 @@ internal object HeexTags {
             while (lexer.tokenType != null) {
                 val token = text.subSequence(lexer.tokenStart, lexer.tokenEnd).toString()
                 if (lexer.tokenType == HEEX_TAG_DELIMITER && token in listOf(">", "/>")) {
-                    tags += HeexTag(name, start, lexer.tokenEnd, closing, token == "/>" || name.lowercase() in HEEX_VOID_TAGS)
+                    tags += HeexTag(name, start, lexer.tokenEnd, closing, token == "/>" || name in HEEX_VOID_TAGS)
                     lexer.advance()
                     break
                 }
@@ -53,7 +53,7 @@ internal object HeexTags {
         for (tag in tags) {
             if (tag.end > offset) break
             if (tag.closing) {
-                val match = stack.indexOfLast { it.equals(tag.name, true) }
+                val match = stack.indexOfLast { it == tag.name }
                 if (match >= 0) while (stack.size > match) stack.removeAt(stack.lastIndex)
             } else if (!tag.selfClosing) stack += tag.name
         }
@@ -63,26 +63,11 @@ internal object HeexTags {
 
 internal object HeexTagEditing {
     fun matchingTag(text: CharSequence, offset: Int): Int? {
-        val tags = HeexTags.read(text)
-        val stack = mutableListOf<HeexTag>()
-        val pairs = mutableMapOf<HeexTag, HeexTag>()
-        for (tag in tags) {
-            if (tag.closing) {
-                val match = stack.indexOfLast { it.name.equals(tag.name, true) }
-                if (match >= 0) {
-                    while (stack.lastIndex > match) stack.removeAt(stack.lastIndex)
-                    val opening = stack.removeAt(stack.lastIndex)
-                    pairs[opening] = tag
-                    pairs[tag] = opening
-                }
-            } else if (!tag.selfClosing) stack.add(tag)
-        }
-        val tag = tags.firstOrNull {
-            val nameEnd = it.start + (if (it.closing) 2 else 1) + it.name.length
-            offset in it.start..nameEnd
-        } ?: return null
-        val match = pairs[tag] ?: return null
-        return match.start + if (match.closing) 2 else 1
+        val pair = HeexTagHighlights.pair(HeexTags.read(text), offset) ?: return null
+        val current = pair.first
+        val other = pair.second
+        val target = if (offset in HeexTagHighlights.nameBounds(current)) other else current
+        return target.start + if (target.closing) 2 else 1
     }
 
     fun closingTag(text: CharSequence, offset: Int): String? {
@@ -90,9 +75,9 @@ internal object HeexTagEditing {
         val tags = HeexTags.read(text)
         val tag = tags.firstOrNull { it.end == offset } ?: return null
         if (tag.closing || tag.selfClosing) return null
-        val openCount = HeexTags.stack(tags, offset).count { it.equals(tag.name, true) }
+        val openCount = HeexTags.stack(tags, offset).count { it == tag.name }
         var available = 0
-        for (later in tags.filter { it.start >= offset && it.name.equals(tag.name, true) }) {
+        for (later in tags.filter { it.start >= offset && it.name == tag.name }) {
             if (later.closing) available++ else if (!later.selfClosing) available--
         }
         return if (available >= openCount) null else "</${tag.name}>"

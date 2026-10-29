@@ -25,6 +25,11 @@ class HeexParserIntegrationTest : ParsingTestCase("", "heex", HeexParserDefiniti
         })
         val views = xml.getElementsByTagName("lang.psiStructureViewFactory")
         assertTrue((0 until views.length).any { views.item(it).attributes.getNamedItem("language")?.nodeValue == "HEEx" })
+        val listeners = xml.getElementsByTagName("editorFactoryListener")
+        assertTrue((0 until listeners.length).any {
+            listeners.item(it).attributes.getNamedItem("implementation")?.nodeValue ==
+                "dev.alquimista.expert.lang.HeexMatchingTagEditorListener"
+        })
         val highlighters = xml.getElementsByTagName("lang.syntaxHighlighterFactory")
         assertTrue((0 until highlighters.length).any { highlighters.item(it).attributes.getNamedItem("language")?.nodeValue == "HEEx" })
     }
