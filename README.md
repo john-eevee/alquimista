@@ -22,9 +22,9 @@ Elixir support for IntelliJ-based IDEs, powered by the [Expert language server](
 
 ### Erlang Observer
 
-Open **View | Tool Windows | Erlang Observer** to inspect a running distributed Erlang or Elixir node. Enter its full node name (`name@host`) and, if needed, its cookie. Leave the cookie empty to use the local Erlang cookie. Choose long node names when the target uses long names. The window refreshes the OTP version, total memory, process count, and a sortable process table with memory, message queue length, and reductions. It uses Erlang from mise when available, or from `PATH`.
+Open **View | Tool Windows | Erlang Observer** to inspect a running distributed Erlang or Elixir node. Enter its full node name (`name@host`) and, if needed, its cookie. Leave the cookie empty to use the local Erlang cookie. Choose long node names when the target uses long names. The window refreshes system information, scheduler utilization, memory and I/O charts, a sortable process list, ETS tables, and application supervision trees. Select a process to inspect its information or OTP state, or kill it after confirmation. The ETS viewer shows up to 200 objects from a readable table. It uses Erlang from mise when available, or from `PATH`.
 
-The target must have distribution enabled and be reachable from the IDE. Observer keeps a separate hidden node connected while the tool window is connected; refreshes use standard input and output. The cookie is sent through standard input and is not saved by the plugin. The initial view does not include supervision trees, ETS, or tracing.
+The target must have distribution enabled and be reachable from the IDE. Observer keeps a separate hidden node connected while the tool window is connected; refreshes use standard input and output. The cookie is sent through standard input and is not saved by the plugin. The view does not yet include tracing, Mnesia, ports, sockets, memory allocators, or the full native Observer feature set. Scheduler metrics use the runtime tools Observer backend on the target.
 
 ### Projects and tests
 
