@@ -146,6 +146,9 @@ class ObserverSession internal constructor(private val process: Process, node: S
     fun killProcess(process: ObservedProcess) { action("kill", process) }
 
     @Synchronized
+    fun processState(process: ObservedProcess): String = action("state", process)
+
+    @Synchronized
     fun tableContents(table: ObservedTable): String = action("table", table.token)
 
     private fun action(operation: String, process: ObservedProcess): String = action(operation, process.token)

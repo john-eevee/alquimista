@@ -43,6 +43,8 @@ class ObserverConnectionIntegrationTest {
                 val first = session.snapshot()
                 val second = session.snapshot()
                 assertEquals(first.node, second.node)
+                val kernelSupervisor = first.processes.single { it.name == "kernel_sup" }
+                assertTrue(session.processState(kernelSupervisor).isNotEmpty())
                 val etsTable = first.tables.single { it.name == "alquimista_test_table" }
                 assertTrue(session.tableContents(etsTable).contains("example"))
                 val privateTable = first.tables.single { it.name == "alquimista_private_table" }

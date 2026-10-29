@@ -77,15 +77,36 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         val table = JTable(model).apply { autoCreateRowSorter = true }
         processTable = table
         val inspect = JButton("Process info").apply { addActionListener { selectedProcess()?.let { processAction(it, false) } } }
+        val state = JButton("Process state").apply { addActionListener { selectedProcess()?.let { stateAction(it) } } }
         val kill = JButton("Kill process").apply { addActionListener { selectedProcess()?.let { processAction(it, true) } } }
         table.addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(event: java.awt.event.MouseEvent) { if (event.clickCount == 2) selectedProcess()?.let { processAction(it, false) } }
         })
         val processPanel = JPanel(BorderLayout()).apply {
             add(JScrollPane(table), BorderLayout.CENTER)
-            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(inspect); add(kill) }, BorderLayout.SOUTH)
+            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(inspect); add(state); add(kill) }, BorderLayout.SOUTH)
         }
         panel.add(top, BorderLayout.NORTH)
+        fun selectedTreeProcess(): ObservedProcess? {
+            val entry = (tree.lastSelectedPathComponent as? javax.swing.tree.DefaultMutableTreeNode)?.userObject as? TreeEntry
+            val item = entry?.item ?: return null
+            return processes.firstOrNull { it.pid == item.pid }.also { if (it == null) status.text = "The selected process is no longer available." }
+        }
+        val treeMenu = JPopupMenu().apply {
+            add(JMenuItem("Process info").apply { addActionListener { selectedTreeProcess()?.let { processAction(it, false) } } })
+            add(JMenuItem("Process state").apply { addActionListener { selectedTreeProcess()?.let { stateAction(it) } } })
+            add(JMenuItem("Kill process").apply { addActionListener { selectedTreeProcess()?.let { processAction(it, true) } } })
+        }
+        tree.addMouseListener(object : java.awt.event.MouseAdapter() {
+            private fun showMenu(event: java.awt.event.MouseEvent) {
+                if (!event.isPopupTrigger) return
+                val path = tree.getPathForLocation(event.x, event.y) ?: return
+                tree.selectionPath = path
+                treeMenu.show(tree, event.x, event.y)
+            }
+            override fun mousePressed(event: java.awt.event.MouseEvent) = showMenu(event)
+            override fun mouseReleased(event: java.awt.event.MouseEvent) = showMenu(event)
+        })
         val etsTable = JTable(tableModel).apply { autoCreateRowSorter = true }
         fun showTable() {
             val selected = etsTable.selectedRow
@@ -233,6 +254,24 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                 ApplicationManager.getApplication().invokeLater {
                     if (current == generation && !project.isDisposed) status.text = "Process action failed: ${error.message}"
                 }
+            }
+        }
+    }
+
+    private fun stateAction(process: ObservedProcess) {
+        val active = synchronized(sessionLock) { session } ?: return
+        val current = generation
+        executor.execute {
+            try {
+                val state = active.processState(process)
+                ApplicationManager.getApplication().invokeLater {
+                    if (current == generation && !project.isDisposed) {
+                        val text = JTextArea(state, 25, 90).apply { isEditable = false; caretPosition = 0 }
+                        JOptionPane.showMessageDialog(panel, JScrollPane(text), "State of ${process.pid}", JOptionPane.INFORMATION_MESSAGE)
+                    }
+                }
+            } catch (error: Exception) {
+                ApplicationManager.getApplication().invokeLater { if (current == generation && !project.isDisposed) status.text = "Process state failed: ${error.message}" }
             }
         }
     }

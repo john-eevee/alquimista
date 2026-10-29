@@ -14,6 +14,11 @@ Action = fun(Kind, Encoded) ->
           {badrpc, _} -> io:format("ERROR\tCould not inspect process~n");
           _ -> io:format("RESULT\t~s~n", [base64:encode(unicode:characters_to_binary(io_lib:format("~P", [Info, 25])))])
         end;
+      state ->
+        case rpc:call(Target, sys, get_state, [Pid, 2000], 3000) of
+          {badrpc, _} -> io:format("ERROR\tProcess does not expose OTP state~n");
+          State -> io:format("RESULT\t~s~n", [base64:encode(unicode:characters_to_binary(io_lib:format("~P", [State, 25])))])
+        end;
       kill ->
         case rpc:call(Target, erlang, exit, [Pid, kill], 5000) of
           true -> io:format("RESULT\tb2s=~n");
@@ -124,6 +129,7 @@ end,
 io:format("END~n"),
 Self(Self);
     "table\t" ++ Token -> TableAction(Token), Self(Self);
+    "state\t" ++ Token -> Action(state, Token), Self(Self);
     "inspect\t" ++ Token -> Action(inspect, Token), Self(Self);
     "kill\t" ++ Token -> Action(kill, Token), Self(Self);
     _ -> Self(Self)
