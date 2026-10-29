@@ -9,6 +9,7 @@ object ElixirColors {
         TextAttributesKey.createTextAttributesKey("ALQUIMISTA_ELIXIR_$name", fallback)
 
     val KEYWORD = key("KEYWORD", Defaults.KEYWORD)
+    val MODULE_ATTRIBUTE = key("MODULE_ATTRIBUTE", Defaults.METADATA)
     val MODULE = key("MODULE", Defaults.CLASS_REFERENCE)
     val FUNCTION_DECLARATION = key("FUNCTION_DECLARATION", Defaults.FUNCTION_DECLARATION)
     val FUNCTION_CALL = key("FUNCTION_CALL", Defaults.FUNCTION_CALL)

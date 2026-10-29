@@ -26,6 +26,7 @@ class HeexSyntaxHighlighter : SyntaxHighlighterBase() {
         private val ELIXIR_COLORS = mapOf(
             ElixirColors.KEYWORD to HeexColors.KEYWORD,
             ElixirColors.MODULE to HeexColors.MODULE,
+            ElixirColors.MODULE_ATTRIBUTE to HeexColors.MODULE_ATTRIBUTE,
             ElixirColors.FUNCTION_DECLARATION to HeexColors.FUNCTION_DECLARATION,
             ElixirColors.FUNCTION_CALL to HeexColors.FUNCTION_CALL,
             ElixirColors.STRING to HeexColors.STRING,

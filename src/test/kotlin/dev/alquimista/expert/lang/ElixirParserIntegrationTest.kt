@@ -54,4 +54,18 @@ class ElixirParserIntegrationTest : ParsingTestCase("", "ex", ElixirParserDefini
         val errors = PsiTreeUtil.findChildrenOfType(file, PsiErrorElement::class.java)
         assertTrue("Unexpected parse errors: ${errors.map { it.errorDescription }}", errors.isEmpty())
     }
+    fun testAttributesNumbersSigilsMapsAndStructs() {
+        val file = parseFile("literals.exs", """
+            defmodule Example do
+              @answer 0xCA_FE
+              def sample do
+                values = %{atom: :ok, count: 1_000, ratio: 1.2e-3, bits: 0b10_01, mode: 0o755}
+                %Example.User{values: values, pattern: ~r/foo/i, raw: ~S|text|}
+              end
+            end
+        """.trimIndent())
+        val errors = PsiTreeUtil.findChildrenOfType(file, PsiErrorElement::class.java)
+        assertTrue("Unexpected parse errors: ${errors.map { it.errorDescription }}", errors.isEmpty())
+    }
+
 }

@@ -162,4 +162,64 @@ end"""
             "transform" to call, "value" to emptyList(), "name" to emptyList()
         ), found)
     }
+    @Test
+    fun `source tokens use their expected theme categories`() {
+        val source = "@answer = %{key: :ok, other: :\"quoted\", n: 0xCA_FE, b: 0b10_01, o: 0o755, d: 1_000, f: 1.2e-3}\n%MyApp.User{} |> work() # comment\n~r/foo/i ~S|raw|"
+        val lexer = highlighter.highlightingLexer
+        lexer.start(source)
+        val tokens = mutableMapOf<String, List<com.intellij.openapi.editor.colors.TextAttributesKey>>()
+        while (lexer.tokenType != null) {
+            tokens[source.substring(lexer.tokenStart, lexer.tokenEnd)] = highlighter.getTokenHighlights(lexer.tokenType!!).toList()
+            lexer.advance()
+        }
+        val attribute = com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributesKey("ALQUIMISTA_ELIXIR_MODULE_ATTRIBUTE")
+        val expected = mapOf(
+            "@" to attribute, "answer" to attribute, "%{" to ElixirColors.BRACES, "%" to ElixirColors.BRACES,
+            "MyApp" to ElixirColors.MODULE, "User" to ElixirColors.MODULE, "." to ElixirColors.DOT,
+            "{" to ElixirColors.BRACES, "}" to ElixirColors.BRACES, "," to ElixirColors.COMMA,
+            "key:" to ElixirColors.ATOM, ":ok" to ElixirColors.ATOM, ":\"quoted\"" to ElixirColors.ATOM,
+            "0xCA_FE" to ElixirColors.NUMBER, "0b10_01" to ElixirColors.NUMBER, "0o755" to ElixirColors.NUMBER,
+            "1_000" to ElixirColors.NUMBER, "1.2e-3" to ElixirColors.NUMBER, "|>" to ElixirColors.OPERATOR, "# comment" to ElixirColors.COMMENT,
+            "~r/" to ElixirColors.STRING, "foo" to ElixirColors.STRING, "/i" to ElixirColors.STRING,
+            "~S|raw|" to ElixirColors.STRING,
+        )
+        expected.forEach { (text, color) -> assertEquals(text, listOf(color), tokens[text]) }
+    }
+
+    @Test
+    fun `embedded Elixir keeps attribute and struct colors in templates`() {
+        val cases = listOf(
+            Triple(EexSyntaxHighlighter(), "<%= %MyApp.User{value: @answer} %>", ElixirColors.MODULE_ATTRIBUTE),
+            Triple(HeexSyntaxHighlighter(), "<div>{%MyApp.User{value: @answer}}</div>", HeexColors.MODULE_ATTRIBUTE),
+        )
+        for ((template, source, attribute) in cases) {
+            val lexer = template.highlightingLexer
+            lexer.start(source)
+            val found = mutableMapOf<String, List<com.intellij.openapi.editor.colors.TextAttributesKey>>()
+            while (lexer.tokenType != null) {
+                found[source.substring(lexer.tokenStart, lexer.tokenEnd)] = template.getTokenHighlights(lexer.tokenType!!).toList()
+                lexer.advance()
+            }
+            assertEquals(source, listOf(attribute), found["@"])
+            assertEquals(source, listOf(attribute), found["answer"])
+            val module = if (template is HeexSyntaxHighlighter) HeexColors.MODULE else ElixirColors.MODULE
+            val braces = if (template is HeexSyntaxHighlighter) HeexColors.BRACES else ElixirColors.BRACES
+            assertEquals(source, listOf(module), found["MyApp"])
+            assertEquals(source, listOf(module), found["User"])
+            assertEquals(source, listOf(braces), found["%"])
+
+        }
+    }
+
+    @Test
+    fun `attribute markers in strings and comments retain their own colors`() {
+        val source = "\"@answer\" # @answer"
+        val lexer = highlighter.highlightingLexer
+        lexer.start(source)
+        while (lexer.tokenType != null) {
+            assertEquals(false, highlighter.getTokenHighlights(lexer.tokenType!!).contains(ElixirColors.MODULE_ATTRIBUTE))
+            lexer.advance()
+        }
+    }
+
 }

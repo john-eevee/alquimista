@@ -16,6 +16,7 @@ class ElixirColorSettingsPage : ColorSettingsPage {
     override fun getAttributeDescriptors(): Array<AttributesDescriptor> = arrayOf(
         AttributesDescriptor("Keyword and macro", ElixirColors.KEYWORD),
         AttributesDescriptor("Module", ElixirColors.MODULE),
+        AttributesDescriptor("Module attribute", ElixirColors.MODULE_ATTRIBUTE),
         AttributesDescriptor("Function declaration", ElixirColors.FUNCTION_DECLARATION),
         AttributesDescriptor("Function call", ElixirColors.FUNCTION_CALL),
         AttributesDescriptor("Comment", ElixirColors.COMMENT),
@@ -61,6 +62,7 @@ class HeexColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Expression delimiter", HeexColors.EXPRESSION_DELIMITER),
         AttributesDescriptor("Elixir keyword and macro", HeexColors.KEYWORD),
         AttributesDescriptor("Elixir module", HeexColors.MODULE),
+        AttributesDescriptor("Elixir module attribute and assign", HeexColors.MODULE_ATTRIBUTE),
         AttributesDescriptor("Elixir function declaration", HeexColors.FUNCTION_DECLARATION),
         AttributesDescriptor("Elixir function call", HeexColors.FUNCTION_CALL),
         AttributesDescriptor("Elixir number", HeexColors.NUMBER),

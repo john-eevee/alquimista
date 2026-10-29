@@ -26,6 +26,7 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
             EX_COMMENTS.contains(tokenType) -> ElixirColors.COMMENT
             tokenType == EX_RAISE || tokenType == EX_SEND || tokenType == EX_THROW -> null
             tokenType == HIGHLIGHT_MACRO_KEYWORD -> ElixirColors.KEYWORD
+            tokenType == HIGHLIGHT_MODULE_ATTRIBUTE -> ElixirColors.MODULE_ATTRIBUTE
             tokenType == HIGHLIGHT_FUNCTION_DECLARATION -> ElixirColors.FUNCTION_DECLARATION
             tokenType == HIGHLIGHT_FUNCTION_CALL -> ElixirColors.FUNCTION_CALL
             tokenType == EX_ALIAS -> ElixirColors.MODULE
@@ -36,7 +37,7 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
             EX_OPERATORS.contains(tokenType) -> ElixirColors.OPERATOR
             EX_PARENS.contains(tokenType) -> ElixirColors.PARENTHESES
             EX_BRACKETS.contains(tokenType) -> ElixirColors.BRACKETS
-            EX_BRACES.contains(tokenType) || EX_BINARY_DELIMITERS.contains(tokenType) -> ElixirColors.BRACES
+            EX_BRACES.contains(tokenType) || tokenType == EX_PERCENT || EX_BINARY_DELIMITERS.contains(tokenType) -> ElixirColors.BRACES
             tokenType == EX_COMMA -> ElixirColors.COMMA
             tokenType == EX_DOT -> ElixirColors.DOT
             tokenType == EX_SEMICOLON -> ElixirColors.SEMICOLON
@@ -46,6 +47,7 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
     }
 }
 
+private val HIGHLIGHT_MODULE_ATTRIBUTE = ExTokenType("HIGHLIGHT_MODULE_ATTRIBUTE")
 private val HIGHLIGHT_MACRO_KEYWORD = ExTokenType("HIGHLIGHT_MACRO_KEYWORD")
 private val HIGHLIGHT_FUNCTION_DECLARATION = ExTokenType("HIGHLIGHT_FUNCTION_DECLARATION")
 private val HIGHLIGHT_FUNCTION_CALL = ExTokenType("HIGHLIGHT_FUNCTION_CALL")
@@ -53,6 +55,9 @@ private val HIGHLIGHT_FUNCTION_CALL = ExTokenType("HIGHLIGHT_FUNCTION_CALL")
 private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
     override fun getTokenType(): IElementType? {
         val token = super.getTokenType()
+        if (token == EX_AT && tokenEnd < bufferEnd &&
+            (bufferSequence[tokenEnd].isLetter() || bufferSequence[tokenEnd] == '_')) return HIGHLIGHT_MODULE_ATTRIBUTE
+        if (token == EX_IDENTIFIER && tokenStart > 0 && bufferSequence[tokenStart - 1] == '@') return HIGHLIGHT_MODULE_ATTRIBUTE
         if (token != EX_IDENTIFIER) return token
         val word = bufferSequence.subSequence(tokenStart, tokenEnd).toString()
         return when {
