@@ -80,3 +80,16 @@ class HeexColorSettingsPage : ColorSettingsPage {
   <%= Enum.map(@items, fn item -> item end) %>
 </.card>"""
 }
+
+class EexColorSettingsPage : ColorSettingsPage {
+    override fun getDisplayName(): String = "EEx"
+    override fun getIcon(): Icon = ElixirIcons.FILE
+    override fun getHighlighter(): SyntaxHighlighter = EexSyntaxHighlighter()
+    override fun getColorDescriptors(): Array<ColorDescriptor> = ColorDescriptor.EMPTY_ARRAY
+    override fun getAdditionalHighlightingTagToDescriptorMap(): Map<String, TextAttributesKey> = emptyMap()
+    override fun getAttributeDescriptors(): Array<AttributesDescriptor> = arrayOf(
+        AttributesDescriptor("Expression delimiter (Elixir colors use the Elixir page)", EexColors.DELIMITER),
+    )
+    override fun getDemoText(): String = """Hello, <%= Enum.join(@names, ", ") %>!
+<%!-- A template comment --%>"""
+}

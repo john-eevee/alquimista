@@ -7,7 +7,7 @@
 - Expert settings for workspace symbols, logging, runtime and source paths, dependency fetching, and compile-on-type.
 
 - Expert LSP integration for Elixir, EEx, and HEEx, including automatic, checksum-verified Expert downloads and mise support.
-- Native Elixir and HEEx syntax highlighting with separate theme-aware color settings, and TextMate highlighting for EEx.
+- Native Elixir, HEEx, and EEx syntax highlighting with theme-aware color settings.
 - Elixir bracket matching, comments, indentation, folding, and Complete Current Statement for delimiters and `do` blocks.
 - ExUnit gutter actions for tests, `describe` groups, and modules, with test runner results, failure navigation, and rerunning failed tests.
 - Optional Credo diagnostics for saved Elixir files in the editor and Problems window.

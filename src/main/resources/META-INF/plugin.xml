@@ -19,7 +19,6 @@
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.lsp</depends>
-    <depends>org.jetbrains.plugins.textmate</depends>
     <depends>intellij.testRunner.plugin</depends>
 
 
@@ -43,10 +42,14 @@
                           implementationClass="dev.alquimista.expert.lang.ElixirParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Elixir"
                           implementationClass="dev.alquimista.expert.lang.ElixirSyntaxHighlighterFactory"/>
+        <lang.parserDefinition language="EEx" implementationClass="dev.alquimista.expert.lang.EexParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="EEx" implementationClass="dev.alquimista.expert.lang.EexSyntaxHighlighterFactory"/>
+        <fileType name="EEx" language="EEx" implementationClass="dev.alquimista.expert.lang.EexFileType" fieldName="INSTANCE" extensions="eex"/>
         <lang.parserDefinition language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexParserDefinition"/>
         <lang.syntaxHighlighterFactory language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexSyntaxHighlighterFactory"/>
         <fileType name="HEEx" language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFileType" fieldName="INSTANCE" extensions="heex"/>
         <colorSettingsPage implementation="dev.alquimista.expert.lang.ElixirColorSettingsPage"/>
+        <colorSettingsPage implementation="dev.alquimista.expert.lang.EexColorSettingsPage"/>
         <colorSettingsPage implementation="dev.alquimista.expert.lang.HeexColorSettingsPage"/>
         <lang.smartEnterProcessor language="Elixir"
                           implementationClass="dev.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
@@ -72,7 +75,6 @@
                              implementation="dev.alquimista.expert.lang.ElixirLiveTemplateContext"/>
         <codeInsight.template.postfixTemplateProvider language="Elixir"
                                  implementationClass="dev.alquimista.expert.lang.ElixirPostfixTemplateProvider"/>
-        <textmate.bundleProvider implementation="dev.alquimista.expert.lang.ElixirTextMateBundleProvider"/>
     </extensions>
 
     <actions>

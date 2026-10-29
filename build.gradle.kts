@@ -16,7 +16,6 @@ dependencies {
         intellijIdea("2026.2.3")
         grammarKit()
         jflex()
-        bundledPlugin("org.jetbrains.plugins.textmate")
         bundledPlugin("intellij.testRunner.plugin")
         testFramework(TestFrameworkType.Platform)
 

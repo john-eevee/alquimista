@@ -9,7 +9,7 @@ Elixir support for IntelliJ-based IDEs, powered by the [Expert language server](
 ### Editing
 
 - Native Elixir highlighting for keywords, macros, modules, functions, and other syntax, with colors inherited from the active theme.
-- A native HEEx highlighter for markup, components, and embedded Elixir; EEx highlighting uses TextMate. Configure Elixir and HEEx colors separately under **Settings | Editor | Color Scheme**.
+- Native HEEx highlighting for markup, components, and embedded Elixir, plus native EEx highlighting for template tags and Elixir expressions. Configure Elixir, HEEx, and EEx delimiter colors under **Settings | Editor | Color Scheme**; EEx expressions use the Elixir colors.
 - Elixir comments, matching brackets, indentation, folding, and Complete Current Statement for delimiters and `do` blocks.
 - Elixir live templates and postfix templates for common expressions.
 - Theme-aware file icons and **New | Elixir File** templates for `.ex`, `.exs`, `.eex`, and `.heex` files.
@@ -63,4 +63,4 @@ Use the Gradle wrapper to build and test the plugin:
 
 The Expert live-diagnostics integration test can run against a local Expert executable by setting `ALQUIMISTA_EXPERT_TEST_EXECUTABLE` to its path; it is skipped when the variable is unset. The Credo integration test uses the bundled fixture and runs when Mix is available. It requires Hex and downloads the fixture’s locked dependencies on its first run into `build/test-fixtures/credo`.
 
-The bundled TextMate grammars are derived from [thiagopromano/explore](https://github.com/thiagopromano/explore) and remain under Apache-2.0; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for notices for bundled third-party code.

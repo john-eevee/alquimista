@@ -27,7 +27,7 @@ class ElixirColorSettingsTest {
         assertNotEquals(ElixirColors.KEYWORD, HeexColors.KEYWORD)
     }
 
-    @Test fun `both color pages are registered`() {
+    @Test fun `all color pages are registered`() {
         val document = javaClass.getResourceAsStream("/META-INF/plugin.xml")!!.use {
             DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(it)
         }
@@ -35,5 +35,12 @@ class ElixirColorSettingsTest {
         val implementations = (0 until pages.length).map { pages.item(it).attributes.getNamedItem("implementation").nodeValue }.toSet()
         assertTrue(implementations.contains("dev.alquimista.expert.lang.ElixirColorSettingsPage"))
         assertTrue(implementations.contains("dev.alquimista.expert.lang.HeexColorSettingsPage"))
+        assertTrue(implementations.contains("dev.alquimista.expert.lang.EexColorSettingsPage"))
+    }
+    @Test fun `EEx delimiter uses an editable theme based color`() {
+        val page = EexColorSettingsPage()
+        assertEquals("EEx", page.displayName)
+        assertTrue(page.attributeDescriptors.any { it.key == EexColors.DELIMITER })
+        assertEquals(DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR, EexColors.DELIMITER.fallbackAttributeKey)
     }
 }
