@@ -39,10 +39,11 @@ class ElixirEditorSupportTest {
         }
         for (name in listOf("lang.commenter", "lang.braceMatcher", "lang.foldingBuilder")) {
             val elements = document.getElementsByTagName(name)
-            assertEquals(name, 1, elements.length)
-            assertEquals("Elixir", elements.item(0).attributes.getNamedItem("language").nodeValue)
+            assertEquals(name, 1, (0 until elements.length).count {
+                elements.item(it).attributes.getNamedItem("language")?.nodeValue == "Elixir"
+            })
         }
-        assertEquals(1, document.getElementsByTagName("lineIndentProvider").length)
+        assertEquals(2, document.getElementsByTagName("lineIndentProvider").length)
         assertTrue(ElixirLineIndentProvider().isSuitableFor(ElixirLanguage.INSTANCE))
         assertFalse(ElixirLineIndentProvider().isSuitableFor(null))
     }
