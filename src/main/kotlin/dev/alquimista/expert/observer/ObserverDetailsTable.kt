@@ -6,7 +6,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
-internal class ObserverDetailsTable<T>(columns: Array<String>, private val row: (T) -> Array<Any>, private val details: (T) -> String) : JPanel(BorderLayout()) {
+internal class ObserverDetailsTable<T>(columns: Array<String>, private val row: (T) -> Array<Any>, private val details: (T) -> String, private val key: (T) -> Any = { it.toString() }) : JPanel(BorderLayout()) {
     private val model = object : DefaultTableModel(columns, 0) {
         override fun isCellEditable(row: Int, column: Int) = false
         override fun getColumnClass(columnIndex: Int): Class<*> = (0 until rowCount).asSequence()
@@ -28,6 +28,16 @@ internal class ObserverDetailsTable<T>(columns: Array<String>, private val row: 
             add(JButton("Show details").apply { addActionListener { showDetails() } })
         }, BorderLayout.SOUTH)
     }
-    fun update(values: List<T>) { items = values; model.rowCount = 0; values.forEach { model.addRow(row(it)) } }
+    fun update(values: List<T>) {
+        val previous = table.selectedRow.takeIf { it >= 0 }?.let { items.getOrNull(table.convertRowIndexToModel(it)) }?.let(key)
+        items = values
+        model.rowCount = 0
+        values.forEach { model.addRow(row(it)) }
+        val index = values.indexOfFirst { key(it) == previous }
+        if (previous != null && index >= 0) {
+            val selected = table.convertRowIndexToView(index)
+            if (selected >= 0) table.setRowSelectionInterval(selected, selected)
+        }
+    }
     fun clear() = update(emptyList())
 }
