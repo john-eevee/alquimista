@@ -36,7 +36,8 @@ TableAction = fun(Encoded) ->
     Result = rpc:call(Target, ets, select, [Tid, [{'_', [], ['$_']}], 200], 5000),
     case Result of
       {Objects, _} when is_list(Objects) ->
-        Value = unicode:characters_to_binary(io_lib:format("~P", [Objects, 25])),
+        Lines = [io_lib:format("~P", [Object, 25]) || Object <- Objects],
+        Value = unicode:characters_to_binary(lists:join($\n, Lines)),
         io:format("RESULT\t~s~n", [base64:encode(Value)]);
       '$end_of_table' -> io:format("RESULT\tW10=~n");
       _ -> io:format("ERROR\tTable is unavailable or not readable~n")

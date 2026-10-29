@@ -14,7 +14,7 @@ class ObserverConnectionIntegrationTest {
         val executable = erl ?: return
         val node = "alquimista_test_${UUID.randomUUID().toString().replace("-", "").take(10)}"
         val cookie = "alquimista_test_cookie"
-        fun startTarget() = ProcessBuilder(executable.absolutePath, "+S", "2:2", "-sname", node, "-setcookie", cookie, "-noshell", "-eval", "register(alquimista_observer_fixture, spawn(fun() -> receive stop -> ok end end)), ets:new(alquimista_test_table, [named_table, public]), ets:insert(alquimista_test_table, {example, 42}), ets:new(alquimista_private_table, [named_table, private]), timer:sleep(infinity).")
+        fun startTarget() = ProcessBuilder(executable.absolutePath, "+S", "2:2", "-sname", node, "-setcookie", cookie, "-noshell", "-eval", "register(alquimista_observer_fixture, spawn(fun() -> receive stop -> ok end end)), ets:new(alquimista_test_table, [named_table, public]), ets:insert(alquimista_test_table, {example, 42}), ets:insert(alquimista_test_table, [{N,N} || N <- lists:seq(1,50)]), ets:new(alquimista_private_table, [named_table, private]), timer:sleep(infinity).")
             .redirectErrorStream(true).start()
         var target = startTarget()
         try {
@@ -46,7 +46,9 @@ class ObserverConnectionIntegrationTest {
                 val kernelSupervisor = first.processes.single { it.name == "kernel_sup" }
                 assertTrue(session.processState(kernelSupervisor).isNotEmpty())
                 val etsTable = first.tables.single { it.name == "alquimista_test_table" }
-                assertTrue(session.tableContents(etsTable).contains("example"))
+                val contents = session.tableContents(etsTable)
+                assertTrue(contents.contains("example"))
+                assertTrue("The viewer should include all 50 small objects", (1..50).all { contents.contains("{$it,$it}") })
                 val privateTable = first.tables.single { it.name == "alquimista_private_table" }
                 assertThrows(IllegalStateException::class.java) { session.tableContents(privateTable) }
                 val fixture = first.processes.single { it.name == "alquimista_observer_fixture" }
