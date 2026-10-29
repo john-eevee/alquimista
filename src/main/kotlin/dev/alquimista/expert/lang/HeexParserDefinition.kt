@@ -1,6 +1,5 @@
 package dev.alquimista.expert.lang
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
@@ -34,7 +33,7 @@ class HeexParserDefinition : ParserDefinition {
     override fun getFileNodeType(): IFileElementType = FILE
     override fun getCommentTokens(): TokenSet = TokenSet.create(HEEX_COMMENT)
     override fun getStringLiteralElements(): TokenSet = TokenSet.create(HEEX_STRING)
-    override fun createElement(node: ASTNode): PsiElement = ASTWrapperPsiElement(node)
+    override fun createElement(node: ASTNode): PsiElement = HeexElement(node)
     override fun createFile(viewProvider: FileViewProvider): PsiFile = HeexPsiFile(viewProvider)
 
     private class HeexPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, HeexLanguage.INSTANCE) {

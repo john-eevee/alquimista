@@ -4,6 +4,8 @@
 
 ### Added
 
+- HEEx tag completion, indentation, folding, and nested tag navigation in the structure view.
+
 - Expert settings for workspace symbols, logging, runtime and source paths, dependency fetching, and compile-on-type.
 
 - Expert LSP integration for Elixir, EEx, and HEEx, including automatic, checksum-verified Expert downloads and mise support.

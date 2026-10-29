@@ -23,6 +23,8 @@ class HeexParserIntegrationTest : ParsingTestCase("", "heex", HeexParserDefiniti
             types.item(it).attributes.getNamedItem("language")?.nodeValue == "HEEx" &&
                 types.item(it).attributes.getNamedItem("extensions")?.nodeValue == "heex"
         })
+        val views = xml.getElementsByTagName("lang.psiStructureViewFactory")
+        assertTrue((0 until views.length).any { views.item(it).attributes.getNamedItem("language")?.nodeValue == "HEEx" })
         val highlighters = xml.getElementsByTagName("lang.syntaxHighlighterFactory")
         assertTrue((0 until highlighters.length).any { highlighters.item(it).attributes.getNamedItem("language")?.nodeValue == "HEEx" })
     }

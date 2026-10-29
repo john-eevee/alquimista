@@ -33,4 +33,12 @@ class HeexStructureTest : ParsingTestCase("", "heex", HeexParserDefinition()) {
         assertEquals(1, folds.size)
         assertEquals("<div>\n  <span>text\n</div>", text.substring(folds[0].range.startOffset, folds[0].range.endOffset))
     }
+    fun testStructureViewShowsNestedTagsInSourceOrder() {
+        val file = parseFile("sample.heex", "<.panel><p>Hi</p><.card><img /></.card></.panel>")
+        val root = HeexStructureElement(file)
+        val panel = root.children.single()
+        assertEquals("<.panel>", panel.presentation.presentableText)
+        assertEquals(listOf("<p>", "<.card>"), panel.children.map { it.presentation.presentableText })
+        assertEquals("<img>", panel.children[1].children.single().presentation.presentableText)
+    }
 }
