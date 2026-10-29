@@ -14,6 +14,8 @@ data class ObservedProcess(
     val token: String = ""
 )
 
+data class SchedulerCounters(val id: Int, val active: Long, val total: Long)
+
 data class ObservedTreeNode(val id: String, val parentId: String, val label: String, val pid: String, val kind: String)
 
 data class ObservedTable(val name: String, val id: String, val owner: String, val size: Long, val memoryWords: Long, val protection: String, val type: String, val token: String = "")
@@ -37,6 +39,7 @@ data class ObserverSnapshot(
     val metrics: ObserverMetrics = ObserverMetrics(),
     val tables: List<ObservedTable> = emptyList(),
     val supervision: List<ObservedTreeNode> = emptyList(),
+    val schedulers: List<SchedulerCounters> = emptyList(),
 ) {
     companion object {
         fun parse(output: String): ObserverSnapshot {
@@ -74,7 +77,12 @@ data class ObserverSnapshot(
                 require(row.size == 6) { "Invalid supervision response" }
                 ObservedTreeNode(decode(row[1]), decode(row[2]), decode(row[3]), decode(row[4]), decode(row[5]))
             }
-            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables, supervision)
+            val schedulers = lines.filter { it.startsWith("Q\t") }.map { line ->
+                val row = line.split('\t')
+                require(row.size == 4) { "Invalid scheduler response" }
+                SchedulerCounters(row[1].toInt(), row[2].toLong(), row[3].toLong())
+            }
+            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables, supervision, schedulers)
         }
     }
 }

@@ -42,6 +42,7 @@ class ObserverConnectionIntegrationTest {
             try {
                 val first = session.snapshot()
                 val second = session.snapshot()
+                assertTrue("Expected scheduler samples after initialization", second.schedulers.isNotEmpty())
                 assertEquals(first.node, second.node)
                 val kernelSupervisor = first.processes.single { it.name == "kernel_sup" }
                 assertTrue(session.processState(kernelSupervisor).isNotEmpty())

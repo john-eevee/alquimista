@@ -89,4 +89,22 @@ class ObserverSnapshotTest {
         assertEquals("<0.1.0>", snapshot.supervision[1].pid)
     }
 
+    @Test fun `parses scheduler counters for utilization charts`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nQ\t1\t500\t1000\nQ\t2\t100\t500\n")
+        assertEquals(2, snapshot.schedulers.size)
+        assertEquals(1, snapshot.schedulers[0].id)
+        assertEquals(500L, snapshot.schedulers[0].active)
+        assertEquals(1000L, snapshot.schedulers[0].total)
+    }
+
+    @Test fun `scheduler utilization uses counter deltas and handles resets`() {
+        val history = ObserverHistory()
+        fun sample(active: Long, total: Long) = ObserverSnapshot("node", "29", 0, 0, emptyList(), schedulers = listOf(SchedulerCounters(1, active, total)))
+        history.add(1000, sample(50, 100))
+        history.add(2000, sample(100, 200))
+        assertEquals(50L, history.samples.last().schedulerPercent)
+        history.add(3000, sample(1, 2))
+        assertEquals(0L, history.samples.last().schedulerPercent)
+    }
+
 }

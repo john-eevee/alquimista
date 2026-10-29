@@ -59,6 +59,17 @@ case net_adm:ping(Target) of
     case {Release, Memory, Pids} of
       {R, M, Ps} when is_list(R), is_integer(M), is_list(Ps) ->
         io:format("OK\t~s\t~s\t~B\t~B~n", [NodeLine, R, M, length(Ps)]),
+        Sampler = Call(spawn, [observer_backend, etop_collect, [self()]]),
+        case is_pid(Sampler) of
+          true -> receive
+            {Sampler, StatsInfo} when is_tuple(StatsInfo), tuple_size(StatsInfo) >= 5, element(1, StatsInfo) =:= etop_info ->
+              case element(5, StatsInfo) of
+                SchedulerList when is_list(SchedulerList) -> lists:foreach(fun({Id, Active, Total}) -> io:format("Q\t~B\t~B\t~B~n", [Id, Active, Total]) end, SchedulerList);
+                _ -> ok
+              end
+          after 3000 -> ok end;
+          false -> ok
+        end,
         Mem = Call(memory, []),
         Io = Call(statistics, [io]),
         case {Mem, Io} of
