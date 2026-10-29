@@ -55,9 +55,11 @@ class ObserverSnapshotTest {
 
     @Test fun `chart history computes rates and handles counter reset`() {
         val history = ObserverHistory(2)
-        fun sample(input: Long, output: Long) = ObserverSnapshot("node", "29", 4096, 1, emptyList(), ObserverMetrics(inputBytes = input, outputBytes = output))
+        fun sample(input: Long, output: Long) = ObserverSnapshot("node", "29", 4096, 1, emptyList(), ObserverMetrics(processMemory = 512, atomMemory = 64, binaryMemory = 32, codeMemory = 128, etsMemory = 256, inputBytes = input, outputBytes = output))
         history.add(1000, sample(100, 200))
         history.add(3000, sample(300, 600))
+        assertEquals(512, history.samples.last().metrics.processMemory)
+        assertEquals(256, history.samples.last().metrics.etsMemory)
         assertEquals(100, history.samples.last().inputPerSecond)
         assertEquals(200, history.samples.last().outputPerSecond)
         history.add(4000, sample(10, 20))
