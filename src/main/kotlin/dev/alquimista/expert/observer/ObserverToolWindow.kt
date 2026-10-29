@@ -50,6 +50,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         }
     }
     private var job: ScheduledFuture<*>? = null
+    @Volatile private var tracing = false
+    private val traceText = JTextArea().apply { isEditable = false }
     private var processes: List<ObservedProcess> = emptyList()
     private var tables: List<ObservedTable> = emptyList()
     private lateinit var processTable: JTable
@@ -78,13 +80,14 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         processTable = table
         val inspect = JButton("Process info").apply { addActionListener { selectedProcess()?.let { processAction(it, false) } } }
         val state = JButton("Process state").apply { addActionListener { selectedProcess()?.let { stateAction(it) } } }
+        val trace = JButton("Trace process").apply { addActionListener { selectedProcess()?.let { startTrace(it) } } }
         val kill = JButton("Kill process").apply { addActionListener { selectedProcess()?.let { processAction(it, true) } } }
         table.addMouseListener(object : java.awt.event.MouseAdapter() {
             override fun mouseClicked(event: java.awt.event.MouseEvent) { if (event.clickCount == 2) selectedProcess()?.let { processAction(it, false) } }
         })
         val processPanel = JPanel(BorderLayout()).apply {
             add(JScrollPane(table), BorderLayout.CENTER)
-            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(inspect); add(state); add(kill) }, BorderLayout.SOUTH)
+            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(inspect); add(state); add(trace); add(kill) }, BorderLayout.SOUTH)
         }
         panel.add(top, BorderLayout.NORTH)
         fun selectedTreeProcess(): ObservedProcess? {
@@ -95,6 +98,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         val treeMenu = JPopupMenu().apply {
             add(JMenuItem("Process info").apply { addActionListener { selectedTreeProcess()?.let { processAction(it, false) } } })
             add(JMenuItem("Process state").apply { addActionListener { selectedTreeProcess()?.let { stateAction(it) } } })
+            add(JMenuItem("Trace process").apply { addActionListener { selectedTreeProcess()?.let { startTrace(it) } } })
             add(JMenuItem("Kill process").apply { addActionListener { selectedTreeProcess()?.let { processAction(it, true) } } })
         }
         tree.addMouseListener(object : java.awt.event.MouseAdapter() {
@@ -135,7 +139,14 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
             add(JScrollPane(etsTable), BorderLayout.CENTER)
             add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(JButton("Show table contents").apply { addActionListener { showTable() } }) }, BorderLayout.SOUTH)
         }
-        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", etsPanel); addTab("Applications", JScrollPane(tree)) }
+        val tracePanel = JPanel(BorderLayout()).apply {
+            add(JScrollPane(traceText), BorderLayout.CENTER)
+            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply {
+                add(JButton("Stop tracing").apply { addActionListener { stopTrace() } })
+                add(JButton("Clear").apply { addActionListener { traceText.text = "" } })
+            }, BorderLayout.SOUTH)
+        }
+        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", etsPanel); addTab("Applications", JScrollPane(tree)); addTab("Trace", tracePanel) }
         panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
@@ -177,11 +188,16 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                     created
                 }
                 val snapshot = active.snapshot()
+                val traceEvents = if (tracing) active.traceEvents() else ""
                 ApplicationManager.getApplication().invokeLater {
                     if (current == generation && !project.isDisposed) {
                         status.text = "Connected to ${snapshot.node}. Refreshing every 5 seconds."
                         summary.text =
                             "OTP ${snapshot.otpRelease}   |   Memory: ${snapshot.memoryBytes} bytes   |   Processes: ${snapshot.processCount}"
+                        if (traceEvents.isNotEmpty()) {
+                            traceText.append(traceEvents + "\n")
+                            if (traceText.document.length > 200_000) traceText.document.remove(0, traceText.document.length - 200_000)
+                        }
                         charts.add(snapshot)
                         val expanded = tree.getExpandedDescendants(javax.swing.tree.TreePath(treeRoot.path))?.toList()
                             ?.mapNotNull { ((it.lastPathComponent as? javax.swing.tree.DefaultMutableTreeNode)?.userObject as? TreeEntry)?.item?.id }
@@ -258,6 +274,35 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         }
     }
 
+    private fun startTrace(process: ObservedProcess) {
+        val active = synchronized(sessionLock) { session } ?: return
+        val current = generation
+        executor.execute {
+            try {
+                active.startTrace(process)
+                if (current != generation) { active.stopTrace(); return@execute }
+                tracing = true
+                ApplicationManager.getApplication().invokeLater { if (current == generation && !project.isDisposed) status.text = "Tracing ${process.pid}; events appear on the Trace tab." }
+            } catch (error: Exception) {
+                ApplicationManager.getApplication().invokeLater { if (current == generation && !project.isDisposed) status.text = "Tracing failed: ${error.message}" }
+            }
+        }
+    }
+
+    private fun stopTrace() {
+        val active = synchronized(sessionLock) { session } ?: return
+        tracing = false
+        val current = generation
+        executor.execute {
+            try {
+                active.stopTrace()
+                ApplicationManager.getApplication().invokeLater { if (current == generation && !project.isDisposed) status.text = "Tracing stopped." }
+            } catch (error: Exception) {
+                ApplicationManager.getApplication().invokeLater { if (current == generation && !project.isDisposed) status.text = "Could not stop tracing: ${error.message}" }
+            }
+        }
+    }
+
     private fun stateAction(process: ObservedProcess) {
         val active = synchronized(sessionLock) { session } ?: return
         val current = generation
@@ -278,6 +323,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
 
     private fun stop() {
         generation++
+        tracing = false
+        traceText.text = ""
         job?.cancel(true); job = null
         synchronized(sessionLock) { session?.close(); session = null }
         connect.isEnabled = true; disconnect.isEnabled = false

@@ -157,13 +157,25 @@ class ObserverSession internal constructor(private val process: Process, node: S
     fun processState(process: ObservedProcess): String = action("state", process)
 
     @Synchronized
+    fun startTrace(process: ObservedProcess) { action("trace_start", process) }
+
+    @Synchronized
+    fun traceEvents(): String = readResult(request("trace_events"))
+
+    @Synchronized
+    fun stopTrace() { readResult(request("trace_stop")) }
+
+    @Synchronized
     fun tableContents(table: ObservedTable): String = action("table", table.token)
 
     private fun action(operation: String, process: ObservedProcess): String = action(operation, process.token)
 
     private fun action(operation: String, token: String): String {
         require(token.matches(Regex("[A-Za-z0-9+/=]+"))) { "Invalid identifier" }
-        val response = request("$operation\t$token")
+        return readResult(request("$operation\t$token"))
+    }
+
+    private fun readResult(response: String): String {
         val error = response.lineSequence().firstOrNull { it.startsWith("ERROR\t") }
         if (error != null) error(error.substringAfter('\t'))
         val result = response.lineSequence().firstOrNull { it.startsWith("RESULT\t") } ?: error("Invalid Observer response")

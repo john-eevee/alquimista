@@ -2,6 +2,56 @@ NodeLine = string:trim(io:get_line("")),
 CookieLine = string:trim(io:get_line("")),
 case CookieLine of "" -> ok; _ -> erlang:set_cookie(node(), list_to_atom(CookieLine)) end,
 Target = list_to_atom(NodeLine),
+TraceAction = fun(Kind, Encoded) ->
+  try
+    case Kind of
+      start ->
+        Pid = binary_to_term(base64:decode(string:trim(Encoded)), [safe]),
+        true = is_pid(Pid) andalso node(Pid) =:= Target,
+        {TraceSession, TraceTable} = case get(observer_trace) of
+          undefined ->
+            {module, dbg} = code:ensure_loaded(dbg),
+            true = erlang:function_exported(dbg, session_create, 1),
+            Table = ets:new(observer_trace, [ordered_set, public]),
+            Session = dbg:session_create(alquimista_observer),
+            Handler = fun(Event, Acc) ->
+              Index = erlang:unique_integer([monotonic, positive]),
+              ets:insert(Acc, {Index, Event}),
+              case ets:info(Acc, size) > 500 of true -> ets:delete(Acc, ets:first(Acc)); false -> ok end,
+              Acc
+            end,
+            try
+              {ok, _} = dbg:session(Session, fun() -> dbg:tracer(process, {Handler, Table}) end),
+              {ok, Target} = dbg:session(Session, fun() -> dbg:n(Target) end),
+              put(observer_trace, {Session, Table}),
+              {Session, Table}
+            catch InitClass:InitError -> dbg:session_destroy(Session), ets:delete(Table), erlang:raise(InitClass, InitError, []) end;
+          Existing -> Existing
+        end,
+        _ = TraceTable,
+        case dbg:session(TraceSession, fun() -> dbg:p(Pid, [send, 'receive', procs]) end) of
+          {ok, _} -> io:format("RESULT\tb2s=~n");
+          _ -> io:format("ERROR\tCould not start tracing~n")
+        end;
+      events ->
+        case get(observer_trace) of
+          undefined -> io:format("RESULT\t~n");
+          {_, Table} ->
+            Events = ets:tab2list(Table),
+            lists:foreach(fun({Key, _}) -> ets:delete(Table, Key) end, Events),
+            Text = unicode:characters_to_binary(lists:join($\n, [io_lib:format("~P", [Event, 12]) || {_, Event} <- Events])),
+            io:format("RESULT\t~s~n", [base64:encode(Text)])
+        end;
+      stop ->
+        case erase(observer_trace) of
+          undefined -> ok;
+          {Session, Table} -> dbg:session_destroy(Session), ets:delete(Table)
+        end,
+        io:format("RESULT\tb2s=~n")
+    end
+  catch _:_ -> io:format("ERROR\tTrace unavailable; isolated tracing requires compatible Erlang runtime tools~n") end,
+  io:format("END~n")
+end,
 Action = fun(Kind, Encoded) ->
   try
     Pid = binary_to_term(base64:decode(string:trim(Encoded)), [safe]),
@@ -140,6 +190,9 @@ case net_adm:ping(Target) of
 end,
 io:format("END~n"),
 Self(Self);
+    "trace_start\t" ++ Token -> TraceAction(start, Token), Self(Self);
+    "trace_events\n" -> TraceAction(events, ""), Self(Self);
+    "trace_stop\n" -> TraceAction(stop, ""), Self(Self);
     "table\t" ++ Token -> TableAction(Token), Self(Self);
     "state\t" ++ Token -> Action(state, Token), Self(Self);
     "inspect\t" ++ Token -> Action(inspect, Token), Self(Self);

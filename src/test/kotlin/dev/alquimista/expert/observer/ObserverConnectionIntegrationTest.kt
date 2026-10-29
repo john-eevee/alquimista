@@ -54,6 +54,12 @@ class ObserverConnectionIntegrationTest {
                 assertThrows(IllegalStateException::class.java) { session.tableContents(privateTable) }
                 val fixture = first.processes.single { it.name == "alquimista_observer_fixture" }
                 assertTrue(session.inspectProcess(fixture).contains("registered_name"))
+                session.startTrace(fixture)
+                assertThrows(IllegalStateException::class.java) { session.processState(fixture) }
+                val events = session.traceEvents()
+                assertTrue("Expected a received system message in the trace: $events", events.contains("system"))
+                session.stopTrace()
+                assertEquals("", session.traceEvents())
                 session.killProcess(fixture)
                 assertFalse(session.snapshot().processes.any { it.name == "alquimista_observer_fixture" })
                 assertEquals(processId, session.processId)
