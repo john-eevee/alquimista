@@ -41,4 +41,8 @@ tasks {
         dependsOn(generateParser)
     }
     compileKotlin { dependsOn(generateLexer) }
+    test {
+        dependsOn(buildPlugin)
+        systemProperty("alquimista.plugin.archive", layout.buildDirectory.file("distributions/${project.name}-${project.version}.zip").get().asFile.absolutePath)
+    }
 }
