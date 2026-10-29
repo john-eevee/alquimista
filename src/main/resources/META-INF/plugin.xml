@@ -82,6 +82,10 @@
     </extensions>
 
     <actions>
+        <action id="Alquimista.GoToMatchingHeexTag"
+                class="dev.alquimista.expert.lang.HeexGoToMatchingTagAction"
+                text="Go to Matching HEEx Tag"
+                description="Move the caret to the matching HEEx tag"/>
         <action id="ElixirExpert.NewFile"
                 class="dev.alquimista.expert.project.CreateElixirFileAction"
                 text="Elixir File"

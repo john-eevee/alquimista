@@ -34,4 +34,12 @@ class HeexTagEditingTest {
         assertEquals("", indent("<img src=\"x\" />\n"))
         assertEquals("", indent("<!-- <div> -->\n"))
     }
+    @Test fun `finds matching tags by name with nesting`() {
+        val text = "<div><.card><span>Hi</span></.card></div>"
+        assertEquals(text.indexOf("</.card>") + 2, HeexTagEditing.matchingTag(text, text.indexOf(".card")))
+        assertEquals(text.indexOf(".card"), HeexTagEditing.matchingTag(text, text.indexOf("</.card>") + 2))
+        assertNull(HeexTagEditing.matchingTag("<div><br></div>", 6))
+        assertNull(HeexTagEditing.matchingTag("<div><p></div>", 6))
+        assertNull(HeexTagEditing.matchingTag("<!-- <p></p> -->", 7))
+    }
 }

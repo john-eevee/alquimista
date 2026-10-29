@@ -9,7 +9,7 @@ Elixir support for IntelliJ-based IDEs, powered by the [Expert language server](
 ### Editing
 
 - Native Elixir highlighting for keywords, macros, modules, functions, and other syntax, with colors inherited from the active theme.
-- Native HEEx highlighting, tag completion, indentation, folding, and a structure view for markup and components, plus native EEx highlighting for template tags and Elixir expressions. Configure Elixir, HEEx, and EEx delimiter colors under **Settings | Editor | Color Scheme**; EEx expressions use the Elixir colors.
+- Native HEEx highlighting, tag completion, indentation, folding, a matching-tag navigation action, and a structure view for markup and components, plus native EEx highlighting for template tags and Elixir expressions. Configure Elixir, HEEx, and EEx delimiter colors under **Settings | Editor | Color Scheme**; EEx expressions use the Elixir colors.
 - Elixir comments, matching brackets, indentation, folding, and Complete Current Statement for delimiters and `do` blocks.
 - Elixir live templates and postfix templates for common expressions.
 - Theme-aware file icons and **New | Elixir File** templates for `.ex`, `.exs`, `.eex`, and `.heex` files.
