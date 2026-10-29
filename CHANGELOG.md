@@ -4,6 +4,8 @@
 
 ### Added
 
+- Erlang Observer tool window with live system and process information for distributed nodes.
+
 - HEEx tag completion, matching-tag highlighting and navigation, indentation, folding, and a structure view.
 
 - Expert settings for workspace symbols, logging, runtime and source paths, dependency fetching, and compile-on-type.

@@ -25,6 +25,7 @@
     <!-- Extensions defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Erlang Observer" anchor="bottom" factoryClass="dev.alquimista.expert.observer.ObserverToolWindowFactory"/>
         <applicationService serviceImplementation="dev.alquimista.expert.settings.ExpertSettings"/>
         <projectService serviceImplementation="dev.alquimista.expert.credo.CredoSettings"/>
         <projectService serviceImplementation="dev.alquimista.expert.credo.CredoRunner"/>

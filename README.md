@@ -20,6 +20,12 @@ Elixir support for IntelliJ-based IDEs, powered by the [Expert language server](
 - Expert quick fixes, refactorings, source actions, and the `Reindex` command are available through IntelliJ.
 - Optional Credo diagnostics appear in the editor and the Problems window for Elixir files, including unsaved edits.
 
+### Erlang Observer
+
+Open **View | Tool Windows | Erlang Observer** to inspect a running distributed Erlang or Elixir node. Enter its full node name (`name@host`) and, if needed, its cookie. Leave the cookie empty to use the local Erlang cookie. Choose long node names when the target uses long names. The window refreshes the OTP version, total memory, process count, and a sortable process table with memory, message queue length, and reductions. It uses Erlang from mise when available, or from `PATH`.
+
+The target must have distribution enabled and be reachable from the IDE. Observer starts a separate hidden node for each refresh; the cookie is sent through standard input and is not saved by the plugin. The initial view does not include supervision trees, ETS, or tracing.
+
 ### Projects and tests
 
 - Run ExUnit tests, `describe` groups, or modules from the gutter. Results appear in the test runner with failure navigation and an action to rerun failed tests.
