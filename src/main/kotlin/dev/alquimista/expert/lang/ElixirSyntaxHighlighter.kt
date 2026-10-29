@@ -1,7 +1,7 @@
 package dev.alquimista.expert.lang
 
-import com.intellij.lexer.Lexer
 import com.intellij.lexer.DelegateLexer
+import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
@@ -22,7 +22,8 @@ class ElixirSyntaxHighlighter : SyntaxHighlighterBase() {
             tokenType == TokenType.BAD_CHARACTER -> ElixirColors.BAD_CHARACTER
             tokenType == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN -> ElixirColors.VALID_ESCAPE
             tokenType == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN ||
-                tokenType == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN -> ElixirColors.INVALID_ESCAPE
+                    tokenType == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN -> ElixirColors.INVALID_ESCAPE
+
             EX_COMMENTS.contains(tokenType) -> ElixirColors.COMMENT
             tokenType == EX_RAISE || tokenType == EX_SEND || tokenType == EX_THROW -> null
             tokenType == HIGHLIGHT_MACRO_KEYWORD -> ElixirColors.KEYWORD
@@ -56,7 +57,8 @@ private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
     override fun getTokenType(): IElementType? {
         val token = super.getTokenType()
         if (token == EX_AT && tokenEnd < bufferEnd &&
-            (bufferSequence[tokenEnd].isLetter() || bufferSequence[tokenEnd] == '_')) return HIGHLIGHT_MODULE_ATTRIBUTE
+            (bufferSequence[tokenEnd].isLetter() || bufferSequence[tokenEnd] == '_')
+        ) return HIGHLIGHT_MODULE_ATTRIBUTE
         if (token == EX_IDENTIFIER && tokenStart > 0 && bufferSequence[tokenStart - 1] == '@') return HIGHLIGHT_MODULE_ATTRIBUTE
         if (token != EX_IDENTIFIER) return token
         val word = bufferSequence.subSequence(tokenStart, tokenEnd).toString()
@@ -114,7 +116,10 @@ private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
         while (lexer.tokenType != null) {
             when (lexer.tokenType) {
                 EX_DO -> return true
-                EX_KW_IDENTIFIER -> if (bufferSequence.subSequence(lexer.tokenStart, lexer.tokenEnd).toString() == "do:") return true
+                EX_KW_IDENTIFIER -> if (bufferSequence.subSequence(lexer.tokenStart, lexer.tokenEnd)
+                        .toString() == "do:"
+                ) return true
+
                 EX_LPAREN, EX_LBRACKET, EX_LBRACE, EX_PERCENT_LBRACE -> nesting++
                 EX_RPAREN, EX_RBRACKET, EX_RBRACE -> if (nesting > 0) nesting--
                 EX_EOL, EX_SEMICOLON, EX_COMMENT -> if (nesting == 0) return false
@@ -133,7 +138,8 @@ private class ElixirHighlightingLexer : DelegateLexer(ExLexer()) {
             "def", "defp", "defmodule", "defmacro", "defmacrop", "defguard", "defguardp",
             "defdelegate", "defexception", "defimpl", "defprotocol", "defstruct", "defoverridable"
         )
-        private val FUNCTION_HEAD = Regex("(?:^|;|->|do:)\\s*(?:def|defp|defmacro|defmacrop|defguard|defguardp|defdelegate)\\s+$")
+        private val FUNCTION_HEAD =
+            Regex("(?:^|;|->|do:)\\s*(?:def|defp|defmacro|defmacrop|defguard|defguardp|defdelegate)\\s+$")
         private val CAPTURE_HEAD = Regex("&\\s*(?:[A-Z][\\w.]*\\.)?$")
         private val CALL_ARGUMENT_STARTS = setOf(
             EX_IDENTIFIER, EX_ALIAS, EX_ATOM, EX_ATOM_QUOTED, EX_KW_IDENTIFIER, EX_INTEGER, EX_FLOAT,

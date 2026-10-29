@@ -9,7 +9,8 @@ object ExUnitTestDetector {
     private data class Describe(val indentation: Int, val name: String)
 
     private val describePattern = Regex("^\\s*describe\\s+(?:\"((?:\\\\.|[^\"])*)\"|:([\\w?!]+))\\s+do\\b")
-    private val testPattern = Regex("^\\s*(?:test|property)\\s+(?:\"((?:\\\\.|[^\"])*)\"|:([\\w?!]+))\\s*(?:,.*)?\\bdo\\b")
+    private val testPattern =
+        Regex("^\\s*(?:test|property)\\s+(?:\"((?:\\\\.|[^\"])*)\"|:([\\w?!]+))\\s*(?:,.*)?\\bdo\\b")
     private val modulePattern = Regex("^\\s*defmodule\\s+([A-Z][\\w.]*)\\s+do\\b")
 
     fun isTestFile(fileName: String): Boolean = fileName.endsWith("_test.exs") || fileName.endsWith("_test.ex")
@@ -39,7 +40,11 @@ object ExUnitTestDetector {
             val describeMatch = describePattern.find(line)
             if (describeMatch != null) {
                 describeStack += Describe(indentation, label(describeMatch))
-                targets += ExUnitTarget(describeStack.joinToString(": ") { it.name }, index + 1, ExUnitTargetKind.DESCRIBE)
+                targets += ExUnitTarget(
+                    describeStack.joinToString(": ") { it.name },
+                    index + 1,
+                    ExUnitTargetKind.DESCRIBE
+                )
                 return@forEachIndexed
             }
 

@@ -12,7 +12,13 @@ class CredoEngine(private val run: (List<String>) -> String?) {
     private val reports = mutableMapOf<String, Pair<String, List<CredoIssue>?>>()
 
     @Synchronized
-    fun analyze(enabled: Boolean, configKey: String, file: String, revision: String, source: String? = null): List<CredoIssue>? {
+    fun analyze(
+        enabled: Boolean,
+        configKey: String,
+        file: String,
+        revision: String,
+        source: String? = null
+    ): List<CredoIssue>? {
         if (!enabled) return null
         if (dependencyKey != configKey) {
             dependencyKey = configKey

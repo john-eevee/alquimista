@@ -23,7 +23,8 @@ class ElixirSmartEnterProcessor : SmartEnterProcessor() {
         document.insertString(offset, closers)
         editor.caretModel.moveToOffset(lineEnd + closers.length)
         val context = DataManager.getInstance().getDataContext(editor.contentComponent)
-        EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, null, context)
+        EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
+            .execute(editor, null, context)
         return true
     }
 }

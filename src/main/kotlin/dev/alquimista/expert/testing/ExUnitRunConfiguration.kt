@@ -2,19 +2,15 @@ package dev.alquimista.expert.testing
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.CommandLineState
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.ConfigurationTypeBase
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.*
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 import com.intellij.execution.testframework.sm.FileUrlProvider
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
-import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.SettingsEditor
@@ -31,8 +27,11 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTextField
 
-class ExUnitConfigurationType : ConfigurationTypeBase("AlquimistaExUnit", "ExUnit", "Run Elixir ExUnit tests", ElixirIcons.FILE) {
-    init { addFactory(ExUnitConfigurationFactory(this)) }
+class ExUnitConfigurationType :
+    ConfigurationTypeBase("AlquimistaExUnit", "ExUnit", "Run Elixir ExUnit tests", ElixirIcons.FILE) {
+    init {
+        addFactory(ExUnitConfigurationFactory(this))
+    }
 }
 
 class ExUnitConfigurationFactory(type: ExUnitConfigurationType) : ConfigurationFactory(type) {
@@ -44,7 +43,8 @@ class ExUnitRunConfiguration(project: Project, factory: ConfigurationFactory, na
     RunConfigurationBase<Any>(project, factory, name) {
     var selection = ExUnitRunSelection(null, null, null)
 
-    override fun getConfigurationEditor(): SettingsEditor<out com.intellij.execution.configurations.RunConfiguration> = ExUnitSettingsEditor()
+    override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
+        ExUnitSettingsEditor()
 
     override fun readExternal(element: Element) {
         super.readExternal(element)
@@ -82,7 +82,10 @@ private class ExUnitSettingsEditor : SettingsEditor<ExUnitRunConfiguration>() {
         if (lineText.isNotEmpty() && (lineText.toIntOrNull() ?: 0) <= 0) {
             throw com.intellij.openapi.options.ConfigurationException("Line must be a positive number")
         }
-        configuration.selection = ExUnitRunSelection(path.text.trim().ifEmpty { null }, lineText.toIntOrNull(), module.text.trim().ifEmpty { null })
+        configuration.selection = ExUnitRunSelection(
+            path.text.trim().ifEmpty { null },
+            lineText.toIntOrNull(),
+            module.text.trim().ifEmpty { null })
     }
 }
 
@@ -96,9 +99,13 @@ private class ExUnitRunState(
         val root = project.basePath ?: throw ExecutionException("The project has no base directory")
         val formatter = extractFormatter()
         val selection = configuration.selection
-        val args = try { ExUnitLaunchCommand.arguments(formatter, selection.path, selection.line, selection.module, failedOnly) }
-        catch (error: IllegalArgumentException) { throw ExecutionException(error.message ?: "Invalid ExUnit selection", error) }
-        val command = MixSdkCommand.commandLine(project, args).withWorkDirectory(root).withEnvironment("MIX_ENV", "test")
+        val args = try {
+            ExUnitLaunchCommand.arguments(formatter, selection.path, selection.line, selection.module, failedOnly)
+        } catch (error: IllegalArgumentException) {
+            throw ExecutionException(error.message ?: "Invalid ExUnit selection", error)
+        }
+        val command =
+            MixSdkCommand.commandLine(project, args).withWorkDirectory(root).withEnvironment("MIX_ENV", "test")
         return OSProcessHandler(command)
     }
 
@@ -110,7 +117,10 @@ private class ExUnitRunState(
                 val action = object : AbstractRerunFailedTestsAction(consoleView) {
                     override fun getRunProfile(environment: ExecutionEnvironment): MyRunProfile =
                         object : MyRunProfile(runConfiguration) {
-                            override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
+                            override fun getState(
+                                executor: Executor,
+                                environment: ExecutionEnvironment
+                            ): RunProfileState =
                                 ExUnitRunState(environment, runConfiguration, failedOnly = true)
                         }
                 }
@@ -132,8 +142,10 @@ private class ExUnitRunState(
             Files.createDirectories(dir)
             val path = dir.resolve("formatter-$hash.exs")
             if (!Files.exists(path)) {
-                try { Files.write(path, bytes, java.nio.file.StandardOpenOption.CREATE_NEW) }
-                catch (_: java.nio.file.FileAlreadyExistsException) { }
+                try {
+                    Files.write(path, bytes, java.nio.file.StandardOpenOption.CREATE_NEW)
+                } catch (_: java.nio.file.FileAlreadyExistsException) {
+                }
             }
             return path.toString()
         } catch (error: java.io.IOException) {

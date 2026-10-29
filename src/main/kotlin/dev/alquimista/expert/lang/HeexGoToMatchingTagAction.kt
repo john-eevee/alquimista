@@ -10,9 +10,11 @@ import com.intellij.openapi.project.DumbAware
 class HeexGoToMatchingTagAction : AnAction(), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
     override fun update(event: AnActionEvent) {
-        event.presentation.isEnabledAndVisible = event.getData(CommonDataKeys.PSI_FILE)?.language == HeexLanguage.INSTANCE &&
-            event.getData(CommonDataKeys.EDITOR) != null
+        event.presentation.isEnabledAndVisible =
+            event.getData(CommonDataKeys.PSI_FILE)?.language == HeexLanguage.INSTANCE &&
+                    event.getData(CommonDataKeys.EDITOR) != null
     }
+
     override fun actionPerformed(event: AnActionEvent) {
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val offset = HeexTagEditing.matchingTag(editor.document.charsSequence, editor.caretModel.offset) ?: return

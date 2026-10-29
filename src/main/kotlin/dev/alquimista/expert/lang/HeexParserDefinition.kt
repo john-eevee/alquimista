@@ -23,7 +23,8 @@ class HeexFileType private constructor() : LanguageFileType(HeexLanguage.INSTANC
     override fun getIcon(): Icon = ElixirIcons.FILE
 
     companion object {
-        @JvmField val INSTANCE = HeexFileType()
+        @JvmField
+        val INSTANCE = HeexFileType()
     }
 }
 
@@ -46,5 +47,6 @@ class HeexParserDefinition : ParserDefinition {
 }
 
 class HeexSyntaxHighlighterFactory : SyntaxHighlighterFactory() {
-    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter = HeexSyntaxHighlighter()
+    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter =
+        HeexSyntaxHighlighter()
 }

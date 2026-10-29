@@ -34,6 +34,7 @@ class ElixirColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Invalid escape", ElixirColors.INVALID_ESCAPE),
         AttributesDescriptor("Bad character", ElixirColors.BAD_CHARACTER),
     )
+
     override fun getDemoText(): String = """# A small Elixir example
 defmodule Example.Greeter do
   def greet(name), do: format(name)
@@ -77,6 +78,7 @@ class HeexColorSettingsPage : ColorSettingsPage {
         AttributesDescriptor("Elixir valid escape", HeexColors.VALID_ESCAPE),
         AttributesDescriptor("Elixir invalid escape", HeexColors.INVALID_ESCAPE),
     )
+
     override fun getDemoText(): String = """<.card :if={@visible} class="greeting">
   Hello, {@name}!
   <%= Enum.map(@items, fn item -> item end) %>
@@ -92,6 +94,7 @@ class EexColorSettingsPage : ColorSettingsPage {
     override fun getAttributeDescriptors(): Array<AttributesDescriptor> = arrayOf(
         AttributesDescriptor("Expression delimiter (Elixir colors use the Elixir page)", EexColors.DELIMITER),
     )
+
     override fun getDemoText(): String = """Hello, <%= Enum.join(@names, ", ") %>!
 <%!-- A template comment --%>"""
 }

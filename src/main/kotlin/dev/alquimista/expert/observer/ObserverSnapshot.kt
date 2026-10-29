@@ -1,13 +1,25 @@
 package dev.alquimista.expert.observer
 
-import java.util.Base64
-import java.util.UUID
-import java.util.concurrent.TimeUnit
+import java.util.*
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-data class ObservedProcess(val pid: String, val name: String, val memoryBytes: Long, val queueLength: Long, val reductions: Long)
-data class ObserverSnapshot(val node: String, val otpRelease: String, val memoryBytes: Long, val processCount: Int, val processes: List<ObservedProcess>) {
+data class ObservedProcess(
+    val pid: String,
+    val name: String,
+    val memoryBytes: Long,
+    val queueLength: Long,
+    val reductions: Long
+)
+
+data class ObserverSnapshot(
+    val node: String,
+    val otpRelease: String,
+    val memoryBytes: Long,
+    val processCount: Int,
+    val processes: List<ObservedProcess>
+) {
     companion object {
         fun parse(output: String): ObserverSnapshot {
             val lines = output.lineSequence().filter { it.isNotBlank() }.toList()
@@ -19,7 +31,13 @@ data class ObserverSnapshot(val node: String, val otpRelease: String, val memory
             val processes = lines.filter { it.startsWith("P\t") }.map { line ->
                 val row = line.split('\t')
                 require(row.size == 6) { "Invalid Observer process response" }
-                ObservedProcess(row[1], String(Base64.getDecoder().decode(row[2]), Charsets.UTF_8), row[3].toLong(), row[4].toLong(), row[5].toLong())
+                ObservedProcess(
+                    row[1],
+                    String(Base64.getDecoder().decode(row[2]), Charsets.UTF_8),
+                    row[3].toLong(),
+                    row[4].toLong(),
+                    row[5].toLong()
+                )
             }
             return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes)
         }
@@ -27,18 +45,37 @@ data class ObserverSnapshot(val node: String, val otpRelease: String, val memory
 }
 
 object ObserverConnection {
-    fun isValidNode(node: String): Boolean = node.matches(Regex("[A-Za-z0-9_][A-Za-z0-9_.-]*@[A-Za-z0-9_][A-Za-z0-9_.-]*"))
+    fun isValidNode(node: String): Boolean =
+        node.matches(Regex("[A-Za-z0-9_][A-Za-z0-9_.-]*@[A-Za-z0-9_][A-Za-z0-9_.-]*"))
 
-    fun open(command: List<String>, node: String, cookie: String, longNames: Boolean, directory: java.io.File? = null): ObserverSession {
+    fun open(
+        command: List<String>,
+        node: String,
+        cookie: String,
+        longNames: Boolean,
+        directory: java.io.File? = null
+    ): ObserverSession {
         require(isValidNode(node)) { "Enter a node name in name@host format" }
         require('\n' !in cookie && '\r' !in cookie) { "The cookie cannot contain a line break" }
         val script = ObserverConnection::class.java.getResourceAsStream("/observer/snapshot.erl")
             ?.bufferedReader()?.use { it.readText() } ?: error("Observer script is missing")
         val localName = "alquimista_observer_" + UUID.randomUUID().toString().replace("-", "").take(12)
-        val args = command + listOf("+S", "2:2", "-hidden", if (longNames) "-name" else "-sname", localName, "-noshell", "-eval", script)
+        val args = command + listOf(
+            "+S",
+            "2:2",
+            "-hidden",
+            if (longNames) "-name" else "-sname",
+            localName,
+            "-noshell",
+            "-eval",
+            script
+        )
         val process = ProcessBuilder(args).directory(directory).redirectErrorStream(true).start()
-        try { return ObserverSession(process, node, cookie) }
-        catch (error: Exception) { process.destroyForcibly(); throw error }
+        try {
+            return ObserverSession(process, node, cookie)
+        } catch (error: Exception) {
+            process.destroyForcibly(); throw error
+        }
     }
 
 }
@@ -52,15 +89,20 @@ class ObserverSession internal constructor(private val process: Process, node: S
 
     init {
         Thread({
-            try { process.inputStream.bufferedReader(Charsets.UTF_8).useLines { sequence -> sequence.forEach { lines.put(it) } } }
-            catch (_: java.io.IOException) { }
-            finally { lines.offer(END_OF_STREAM) }
+            try {
+                process.inputStream.bufferedReader(Charsets.UTF_8)
+                    .useLines { sequence -> sequence.forEach { lines.put(it) } }
+            } catch (_: java.io.IOException) {
+            } finally {
+                lines.offer(END_OF_STREAM)
+            }
         }, "Alquimista Observer output").apply { isDaemon = true; start() }
         writer.write("$node\n$cookie\n")
         writer.flush()
     }
 
-    @Synchronized fun snapshot(): ObserverSnapshot {
+    @Synchronized
+    fun snapshot(): ObserverSnapshot {
         check(!closed.get() && process.isAlive) { "Observer session is closed" }
         try {
             writer.write("refresh\n"); writer.flush()
@@ -69,8 +111,12 @@ class ObserverSession internal constructor(private val process: Process, node: S
             while (true) {
                 val remaining = deadline - System.nanoTime()
                 val line = if (remaining > 0) lines.poll(remaining, TimeUnit.NANOSECONDS) else null
-                if (line == null) { close(); error("Observer connection timed out") }
-                if (line == END_OF_STREAM) { close(); error("Observer process exited: ${response.toString().takeLast(1000)}") }
+                if (line == null) {
+                    close(); error("Observer connection timed out")
+                }
+                if (line == END_OF_STREAM) {
+                    close(); error("Observer process exited: ${response.toString().takeLast(1000)}")
+                }
                 if (line == "END") return ObserverSnapshot.parse(response.toString())
                 response.append(line).append('\n')
             }
@@ -87,5 +133,7 @@ class ObserverSession internal constructor(private val process: Process, node: S
         }
     }
 
-    companion object { private const val END_OF_STREAM = "\u0000observer-eof" }
+    companion object {
+        private const val END_OF_STREAM = "\u0000observer-eof"
+    }
 }

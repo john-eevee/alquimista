@@ -30,7 +30,9 @@ class CredoRunner(private val project: Project) {
                 override fun afterDocumentSaved(document: Document) {
                     val file = FileDocumentManager.getInstance().getFile(document) ?: return
                     val root = project.basePath?.let(Paths::get)?.toAbsolutePath()?.normalize() ?: return
-                    if (!runCatching { Paths.get(file.path).toAbsolutePath().normalize().startsWith(root) }.getOrDefault(false)) return
+                    if (!runCatching {
+                            Paths.get(file.path).toAbsolutePath().normalize().startsWith(root)
+                        }.getOrDefault(false)) return
                     if (file.extension !in setOf("ex", "exs") && file.name !in setOf("mix.lock", ".credo.exs")) return
                     ApplicationManager.getApplication().invokeLater {
                         if (project.isDisposed || !CredoSettings.getInstance(project).state.enabled) return@invokeLater
@@ -39,7 +41,8 @@ class CredoRunner(private val project: Project) {
                             engines.clear()
                             daemon.restart("Credo configuration changed")
                         } else {
-                            PsiManager.getInstance(project).findFile(file)?.let { daemon.restart(it, "Elixir file saved") }
+                            PsiManager.getInstance(project).findFile(file)
+                                ?.let { daemon.restart(it, "Elixir file saved") }
                         }
                     }
                 }
@@ -49,7 +52,14 @@ class CredoRunner(private val project: Project) {
             override fun after(events: List<VFileEvent>) {
                 if (project.isDisposed || !CredoSettings.getInstance(project).state.enabled) return
                 val root = project.basePath?.let(Paths::get) ?: return
-                if (events.none { event -> runCatching { CredoProject.isConfigurationChange(root, Paths.get(event.path)) }.getOrDefault(false) }) return
+                if (events.none { event ->
+                        runCatching {
+                            CredoProject.isConfigurationChange(
+                                root,
+                                Paths.get(event.path)
+                            )
+                        }.getOrDefault(false)
+                    }) return
                 ApplicationManager.getApplication().invokeLater {
                     if (project.isDisposed || !CredoSettings.getInstance(project).state.enabled) return@invokeLater
                     engines.clear()

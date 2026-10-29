@@ -1,8 +1,8 @@
 package dev.alquimista.expert.lang
 
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Defaults
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Defaults
 
 object ElixirColors {
     private fun key(name: String, fallback: TextAttributesKey): TextAttributesKey =

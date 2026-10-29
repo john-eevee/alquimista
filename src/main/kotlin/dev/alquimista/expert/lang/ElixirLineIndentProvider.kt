@@ -44,7 +44,8 @@ internal object ElixirIndent {
             }
             lexer.advance()
         }
-        val addsLevel = delimiters.isNotEmpty() || last in setOf(EX_DO, EX_FN, EX_ARROW, EX_ELSE, EX_AFTER, EX_RESCUE, EX_CATCH)
+        val addsLevel =
+            delimiters.isNotEmpty() || last in setOf(EX_DO, EX_FN, EX_ARROW, EX_ELSE, EX_AFTER, EX_RESCUE, EX_CATCH)
         return indentation + if (addsLevel) "  " else ""
     }
 }

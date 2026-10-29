@@ -2,13 +2,13 @@ package dev.alquimista.expert.settings
 
 import com.google.gson.JsonParser
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.application.PathManager
 import com.intellij.platform.lsp.api.LspClientManager
 import dev.alquimista.expert.lsp.ExpertLspServerSupportProvider
 import java.io.File
@@ -56,7 +56,12 @@ object ExpertDownloader {
                         check(actualChecksum.equals(checksum, ignoreCase = true)) {
                             "The downloaded Expert binary failed checksum verification"
                         }
-                        Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+                        Files.move(
+                            temporary,
+                            destination,
+                            StandardCopyOption.REPLACE_EXISTING,
+                            StandardCopyOption.ATOMIC_MOVE
+                        )
                     } finally {
                         Files.deleteIfExists(temporary)
                     }

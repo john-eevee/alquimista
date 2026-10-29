@@ -7,13 +7,17 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import java.util.LinkedHashSet
 
 data class PostfixExpansion(val text: String, val caretOffset: Int)
 
 object ElixirPostfixExpansion {
     private val transforms: Map<String, (String) -> PostfixExpansion> = mapOf(
-        "inspect" to { expression -> PostfixExpansion("IO.inspect($expression)", "IO.inspect($expression)".length - 1) },
+        "inspect" to { expression ->
+            PostfixExpansion(
+                "IO.inspect($expression)",
+                "IO.inspect($expression)".length - 1
+            )
+        },
         "dbg" to { expression -> PostfixExpansion("dbg($expression)", "dbg($expression)".length - 1) },
         "ok" to { expression -> PostfixExpansion("{:ok, $expression}", "{:ok, $expression}".length) },
         "error" to { expression -> PostfixExpansion("{:error, $expression}", "{:error, $expression}".length) },

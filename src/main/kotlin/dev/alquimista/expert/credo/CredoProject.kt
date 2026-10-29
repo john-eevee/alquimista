@@ -10,7 +10,7 @@ object CredoProject {
         if (!path.startsWith(root)) return false
         val name = path.fileName?.toString() ?: return false
         return name in setOf("mix.exs", "mix.lock", ".credo.exs", "deps") ||
-            (name == "credo" && path.parent?.fileName?.toString() == "deps")
+                (name == "credo" && path.parent?.fileName?.toString() == "deps")
     }
 
     fun findMixRoot(projectRoot: Path, file: Path): Path? {
@@ -35,7 +35,11 @@ object CredoProject {
             paths.forEach { path ->
                 append('|').append(path).append(':')
                 append(runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(-1))
-                append(':').append(runCatching { if (Files.isRegularFile(path)) Files.size(path) else -1 }.getOrDefault(-1))
+                append(':').append(
+                    runCatching { if (Files.isRegularFile(path)) Files.size(path) else -1 }.getOrDefault(
+                        -1
+                    )
+                )
             }
         }
     }

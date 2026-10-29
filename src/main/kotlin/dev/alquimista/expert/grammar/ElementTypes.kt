@@ -5,7 +5,6 @@ package dev.alquimista.expert.grammar
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import dev.alquimista.expert.grammar.ExLanguage
 
 /**
  * Custom element type for Elixir tokens.

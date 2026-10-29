@@ -13,7 +13,9 @@ class CredoSettings : PersistentStateComponent<CredoSettings.State> {
 
     private var value = State()
     override fun getState(): State = value
-    override fun loadState(state: State) { value = state }
+    override fun loadState(state: State) {
+        value = state
+    }
 
     companion object {
         fun getInstance(project: Project): CredoSettings = project.getService(CredoSettings::class.java)

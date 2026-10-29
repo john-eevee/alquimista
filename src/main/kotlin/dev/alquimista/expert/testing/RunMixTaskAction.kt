@@ -3,9 +3,9 @@ package dev.alquimista.expert.testing
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -32,7 +32,12 @@ open class RunMixTaskAction(
                     CapturingProcessHandler(command).runProcess()
                 } catch (error: Exception) {
                     LOG.warn("Could not start $title", error)
-                    notify(project, "Could not start $title", error.message ?: "Could not start mix.", NotificationType.ERROR)
+                    notify(
+                        project,
+                        "Could not start $title",
+                        error.message ?: "Could not start mix.",
+                        NotificationType.ERROR
+                    )
                     return
                 }
                 val output = (result.stdout.ifBlank { result.stderr }).trim().takeLast(MAX_NOTIFICATION_CHARS)
@@ -43,7 +48,12 @@ open class RunMixTaskAction(
         }.queue()
     }
 
-    private fun notify(project: com.intellij.openapi.project.Project, title: String, body: String, type: NotificationType) {
+    private fun notify(
+        project: com.intellij.openapi.project.Project,
+        title: String,
+        body: String,
+        type: NotificationType
+    ) {
         NotificationGroupManager.getInstance().getNotificationGroup("Elixir Expert")
             .createNotification(title, body, type).notify(project)
     }
@@ -59,9 +69,11 @@ class RunMixTestsAction : AnAction() {
     override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = event.project?.basePath != null
     }
+
     override fun actionPerformed(event: AnActionEvent) {
         event.project?.let { ExUnitRunner.run(it, "All ExUnit Tests", ExUnitRunSelection(null, null, null)) }
     }
 }
+
 class MixFormatAction : RunMixTaskAction("Running Mix Format", MixTask.FORMAT)
 class MixDepsGetAction : RunMixTaskAction("Fetching Mix Dependencies", MixTask.DEPENDENCIES)

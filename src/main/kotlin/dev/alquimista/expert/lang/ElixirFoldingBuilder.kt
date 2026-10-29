@@ -15,8 +15,8 @@ class ElixirFoldingBuilder : FoldingBuilderEx(), DumbAware {
         val nodes = PsiTreeUtil.collectElements(root) {
             val node = it.node
             (node.elementType == ExTypes.DO_BLOCK || node.elementType == ExTypes.FN_EXPR) &&
-                node.findChildByType(EX_END) != null &&
-                document.getLineNumber(it.textRange.startOffset) < document.getLineNumber(it.textRange.endOffset - 1)
+                    node.findChildByType(EX_END) != null &&
+                    document.getLineNumber(it.textRange.startOffset) < document.getLineNumber(it.textRange.endOffset - 1)
         }
         return nodes.map { FoldingDescriptor(it.node, it.textRange) }.toTypedArray()
     }

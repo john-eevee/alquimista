@@ -4,7 +4,7 @@ import com.intellij.ide.FileIconProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.Locale
+import java.util.*
 import javax.swing.Icon
 
 object ElixirIcons {

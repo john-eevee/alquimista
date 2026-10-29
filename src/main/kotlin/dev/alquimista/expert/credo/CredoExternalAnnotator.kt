@@ -10,7 +10,15 @@ import com.intellij.psi.PsiFile
 import java.nio.file.Path
 import java.nio.file.Paths
 
-data class CredoInput(val project: Project, val root: Path, val mixRoot: Path, val file: Path, val sdkKey: String, val text: String)
+data class CredoInput(
+    val project: Project,
+    val root: Path,
+    val mixRoot: Path,
+    val file: Path,
+    val sdkKey: String,
+    val text: String
+)
+
 data class CredoResult(val input: CredoInput, val issues: List<CredoIssue>)
 
 class CredoExternalAnnotator : ExternalAnnotator<CredoInput, CredoResult>() {
@@ -38,7 +46,8 @@ class CredoExternalAnnotator : ExternalAnnotator<CredoInput, CredoResult>() {
         if (!CredoSettings.getInstance(file.project).state.enabled || file.text != result.input.text) return
         for (issue in result.issues) {
             if (!CredoDiagnostics.matchesFile(result.input.mixRoot, result.input.file, issue.filename)) continue
-            val (start, end) = CredoRanges.offsets(result.input.text, issue.line, issue.column, issue.columnEnd) ?: continue
+            val (start, end) = CredoRanges.offsets(result.input.text, issue.line, issue.column, issue.columnEnd)
+                ?: continue
             holder.newAnnotation(HighlightSeverity.WARNING, CredoDiagnostics.message(issue))
                 .range(TextRange(start, end)).create()
         }

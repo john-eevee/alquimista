@@ -31,5 +31,6 @@ class ElixirBraceMatcher : PairedBraceMatcher {
             TokenType.WHITE_SPACE, EX_EOL, EX_COMMENT, EX_COMMA, EX_SEMICOLON,
             EX_RPAREN, EX_RBRACKET, EX_RBRACE, EX_GT_GT, EX_INTERPOLATION_END
         )
+
     override fun getCodeConstructStart(file: PsiFile, openingBraceOffset: Int): Int = openingBraceOffset
 }

@@ -25,13 +25,14 @@
     <!-- Extensions defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow id="Erlang Observer" anchor="bottom" factoryClass="dev.alquimista.expert.observer.ObserverToolWindowFactory"/>
+        <toolWindow id="Erlang Observer" anchor="bottom"
+                    factoryClass="dev.alquimista.expert.observer.ObserverToolWindowFactory"/>
         <applicationService serviceImplementation="dev.alquimista.expert.settings.ExpertSettings"/>
         <projectService serviceImplementation="dev.alquimista.expert.credo.CredoSettings"/>
         <projectService serviceImplementation="dev.alquimista.expert.credo.CredoRunner"/>
         <projectConfigurable parentId="language"
-                instance="dev.alquimista.expert.credo.CredoConfigurable"
-                id="dev.alquimista.expert.credo.settings" displayName="Credo"/>
+                             instance="dev.alquimista.expert.credo.CredoConfigurable"
+                             id="dev.alquimista.expert.credo.settings" displayName="Credo"/>
         <applicationConfigurable
                 parentId="language"
                 instance="dev.alquimista.expert.settings.ExpertConfigurable"
@@ -40,23 +41,28 @@
         <platform.lsp.integrationProvider
                 implementation="dev.alquimista.expert.lsp.ExpertLspServerSupportProvider"/>
         <lang.parserDefinition language="Elixir"
-                          implementationClass="dev.alquimista.expert.lang.ElixirParserDefinition"/>
+                               implementationClass="dev.alquimista.expert.lang.ElixirParserDefinition"/>
         <lang.syntaxHighlighterFactory language="Elixir"
-                          implementationClass="dev.alquimista.expert.lang.ElixirSyntaxHighlighterFactory"/>
+                                       implementationClass="dev.alquimista.expert.lang.ElixirSyntaxHighlighterFactory"/>
         <lang.parserDefinition language="EEx" implementationClass="dev.alquimista.expert.lang.EexParserDefinition"/>
-        <lang.syntaxHighlighterFactory language="EEx" implementationClass="dev.alquimista.expert.lang.EexSyntaxHighlighterFactory"/>
-        <fileType name="EEx" language="EEx" implementationClass="dev.alquimista.expert.lang.EexFileType" fieldName="INSTANCE" extensions="eex"/>
+        <lang.syntaxHighlighterFactory language="EEx"
+                                       implementationClass="dev.alquimista.expert.lang.EexSyntaxHighlighterFactory"/>
+        <fileType name="EEx" language="EEx" implementationClass="dev.alquimista.expert.lang.EexFileType"
+                  fieldName="INSTANCE" extensions="eex"/>
         <lang.parserDefinition language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexParserDefinition"/>
-        <lang.syntaxHighlighterFactory language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexSyntaxHighlighterFactory"/>
-        <fileType name="HEEx" language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFileType" fieldName="INSTANCE" extensions="heex"/>
+        <lang.syntaxHighlighterFactory language="HEEx"
+                                       implementationClass="dev.alquimista.expert.lang.HeexSyntaxHighlighterFactory"/>
+        <fileType name="HEEx" language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFileType"
+                  fieldName="INSTANCE" extensions="heex"/>
         <colorSettingsPage implementation="dev.alquimista.expert.lang.ElixirColorSettingsPage"/>
         <colorSettingsPage implementation="dev.alquimista.expert.lang.EexColorSettingsPage"/>
         <colorSettingsPage implementation="dev.alquimista.expert.lang.HeexColorSettingsPage"/>
         <lang.smartEnterProcessor language="Elixir"
-                          implementationClass="dev.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
+                                  implementationClass="dev.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
         <lang.commenter language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirCommenter"/>
         <lang.braceMatcher language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirBraceMatcher"/>
-        <lang.psiStructureViewFactory language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexStructureViewFactory"/>
+        <lang.psiStructureViewFactory language="HEEx"
+                                      implementationClass="dev.alquimista.expert.lang.HeexStructureViewFactory"/>
         <lang.foldingBuilder language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFoldingBuilder"/>
         <lang.foldingBuilder language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirFoldingBuilder"/>
         <lineIndentProvider implementation="dev.alquimista.expert.lang.ElixirLineIndentProvider"/>
@@ -80,7 +86,7 @@
         <liveTemplateContext contextId="ELIXIR"
                              implementation="dev.alquimista.expert.lang.ElixirLiveTemplateContext"/>
         <codeInsight.template.postfixTemplateProvider language="Elixir"
-                                 implementationClass="dev.alquimista.expert.lang.ElixirPostfixTemplateProvider"/>
+                                                      implementationClass="dev.alquimista.expert.lang.ElixirPostfixTemplateProvider"/>
     </extensions>
 
     <actions>

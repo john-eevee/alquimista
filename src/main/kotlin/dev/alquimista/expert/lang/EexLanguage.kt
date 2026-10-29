@@ -23,7 +23,10 @@ import com.intellij.psi.tree.TokenSet
 import javax.swing.Icon
 
 class EexLanguage private constructor() : Language("EEx") {
-    companion object { @JvmField val INSTANCE = EexLanguage() }
+    companion object {
+        @JvmField
+        val INSTANCE = EexLanguage()
+    }
 }
 
 class EexFileType private constructor() : LanguageFileType(EexLanguage.INSTANCE) {
@@ -31,11 +34,18 @@ class EexFileType private constructor() : LanguageFileType(EexLanguage.INSTANCE)
     override fun getDescription(): String = "EEx template"
     override fun getDefaultExtension(): String = "eex"
     override fun getIcon(): Icon = ElixirIcons.FILE
-    companion object { @JvmField val INSTANCE = EexFileType() }
+
+    companion object {
+        @JvmField
+        val INSTANCE = EexFileType()
+    }
 }
 
 object EexColors {
-    val DELIMITER = TextAttributesKey.createTextAttributesKey("ALQUIMISTA_EEX_DELIMITER", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR)
+    val DELIMITER = TextAttributesKey.createTextAttributesKey(
+        "ALQUIMISTA_EEX_DELIMITER",
+        DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR
+    )
 }
 
 class EexSyntaxHighlighter : SyntaxHighlighterBase() {
@@ -50,7 +60,8 @@ class EexSyntaxHighlighter : SyntaxHighlighterBase() {
 }
 
 class EexSyntaxHighlighterFactory : SyntaxHighlighterFactory() {
-    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter = EexSyntaxHighlighter()
+    override fun getSyntaxHighlighter(project: Project?, virtualFile: VirtualFile?): SyntaxHighlighter =
+        EexSyntaxHighlighter()
 }
 
 class EexParserDefinition : ParserDefinition {
@@ -61,6 +72,7 @@ class EexParserDefinition : ParserDefinition {
         marker.done(root)
         builder.treeBuilt
     }
+
     override fun getFileNodeType(): IFileElementType = FILE
     override fun getCommentTokens(): TokenSet = TokenSet.create(EEX_COMMENT)
     override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
@@ -69,5 +81,8 @@ class EexParserDefinition : ParserDefinition {
     private class EexPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, EexLanguage.INSTANCE) {
         override fun getFileType() = EexFileType.INSTANCE
     }
-    companion object { private val FILE = IFileElementType(EexLanguage.INSTANCE) }
+
+    companion object {
+        private val FILE = IFileElementType(EexLanguage.INSTANCE)
+    }
 }

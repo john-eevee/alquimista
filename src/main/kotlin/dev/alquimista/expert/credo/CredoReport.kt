@@ -28,8 +28,10 @@ object CredoReport {
                     val filename = issue.string("filename")?.takeIf { it.isNotBlank() } ?: return@runCatching null
                     val line = issue.number("line_no")?.takeIf { it > 0 } ?: return@runCatching null
                     val message = issue.string("message")?.takeIf { it.isNotBlank() } ?: return@runCatching null
-                    CredoIssue(filename, line, issue.number("column"), issue.number("column_end"), message,
-                        issue.string("category").orEmpty(), issue.string("check").orEmpty())
+                    CredoIssue(
+                        filename, line, issue.number("column"), issue.number("column_end"), message,
+                        issue.string("category").orEmpty(), issue.string("check").orEmpty()
+                    )
                 }.getOrNull()
             }
         }

@@ -13,7 +13,13 @@ internal class ExpertConfigurationListener(
 ) : LspServerListener {
     override fun serverInitialized(params: InitializeResult) {
         findClient()?.sendNotification { server ->
-            server.workspaceService.didChangeConfiguration(DidChangeConfigurationParams(ExpertConfiguration.toJson(settings())))
+            server.workspaceService.didChangeConfiguration(
+                DidChangeConfigurationParams(
+                    ExpertConfiguration.toJson(
+                        settings()
+                    )
+                )
+            )
         }
     }
 }

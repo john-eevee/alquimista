@@ -35,7 +35,12 @@ object MiseSupport {
         val commonDirectories = if (windows) {
             listOf(home.resolve("scoop/shims"), home.resolve(".local/bin"))
         } else {
-            listOf(home.resolve(".local/bin"), home.resolve(".cargo/bin"), Paths.get("/opt/homebrew/bin"), Paths.get("/usr/local/bin"))
+            listOf(
+                home.resolve(".local/bin"),
+                home.resolve(".cargo/bin"),
+                Paths.get("/opt/homebrew/bin"),
+                Paths.get("/usr/local/bin")
+            )
         }
         return (pathDirectories + commonDirectories)
             .flatMap { directory -> names.map(directory::resolve) }

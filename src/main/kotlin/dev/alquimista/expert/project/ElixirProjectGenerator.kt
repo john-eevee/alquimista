@@ -1,10 +1,10 @@
 package dev.alquimista.expert.project
 
 import com.intellij.facet.ui.ValidationResult
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.application.WriteAction
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.GeneratorPeerImpl
 import com.intellij.platform.ProjectGeneratorPeer

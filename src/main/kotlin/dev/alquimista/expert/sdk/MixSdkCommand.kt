@@ -28,8 +28,14 @@ object MixSdkCommand {
         })
         if (sdk == null) return MiseSupport.commandLine("mix", arguments)
         val home = sdk.homePath ?: error("The selected Elixir SDK has no home path")
-        val invocation = forSdk(home, arguments, System.getenv("PATH").orEmpty(), System.getProperty("os.name").contains("windows", true))
-        return GeneralCommandLine(invocation.executable).withParameters(invocation.arguments).withEnvironment("PATH", invocation.path)
+        val invocation = forSdk(
+            home,
+            arguments,
+            System.getenv("PATH").orEmpty(),
+            System.getProperty("os.name").contains("windows", true)
+        )
+        return GeneralCommandLine(invocation.executable).withParameters(invocation.arguments)
+            .withEnvironment("PATH", invocation.path)
     }
 
     fun forSdk(home: String, arguments: List<String>, inheritedPath: String, windows: Boolean): MixSdkInvocation {

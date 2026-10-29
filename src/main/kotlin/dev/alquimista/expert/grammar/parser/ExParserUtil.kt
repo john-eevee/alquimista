@@ -3,38 +3,7 @@ package dev.alquimista.expert.grammar.parser
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.psi.tree.IElementType
-import dev.alquimista.expert.grammar.EX_ATOM
-import dev.alquimista.expert.grammar.EX_ATOM_QUOTED
-import dev.alquimista.expert.grammar.EX_CHAR
-import dev.alquimista.expert.grammar.EX_CHARLIST
-import dev.alquimista.expert.grammar.EX_CHARLIST_BEGIN
-import dev.alquimista.expert.grammar.EX_CHARLIST_HEREDOC
-import dev.alquimista.expert.grammar.EX_COLON
-import dev.alquimista.expert.grammar.EX_COMMA
-import dev.alquimista.expert.grammar.EX_COMMENT
-import dev.alquimista.expert.grammar.EX_EOL
-import dev.alquimista.expert.grammar.EX_FALSE
-import dev.alquimista.expert.grammar.EX_FAT_ARROW
-import dev.alquimista.expert.grammar.EX_FLOAT
-import dev.alquimista.expert.grammar.EX_GT_GT
-import dev.alquimista.expert.grammar.EX_HEREDOC
-import dev.alquimista.expert.grammar.EX_INTEGER
-import dev.alquimista.expert.grammar.EX_KW_IDENTIFIER
-import dev.alquimista.expert.grammar.EX_LBRACE
-import dev.alquimista.expert.grammar.EX_LBRACKET
-import dev.alquimista.expert.grammar.EX_LPAREN
-import dev.alquimista.expert.grammar.EX_LT_LT
-import dev.alquimista.expert.grammar.EX_PERCENT_LBRACE
-import dev.alquimista.expert.grammar.EX_PIPE
-import dev.alquimista.expert.grammar.EX_PERCENT
-import dev.alquimista.expert.grammar.EX_RBRACE
-import dev.alquimista.expert.grammar.EX_RBRACKET
-import dev.alquimista.expert.grammar.EX_RPAREN
-import dev.alquimista.expert.grammar.EX_SIGIL
-import dev.alquimista.expert.grammar.EX_STRING
-import dev.alquimista.expert.grammar.EX_STRING_BEGIN
-import dev.alquimista.expert.grammar.EX_TRUE
-import dev.alquimista.expert.grammar.EX_NIL
+import dev.alquimista.expert.grammar.*
 
 /**
  * Parser helpers invoked from the generated grammar to keep lookaheads and fast paths centralized.
@@ -99,8 +68,7 @@ object ExParserUtil {
      */
     @JvmStatic
     fun mapAssocPairStart(builder: PsiBuilder, level: Int): Boolean {
-        if (!GeneratedParserUtilBase.recursion_guard_(builder, level, "mapAssocPairStart")) return false
-        return scanForTopLevel(builder, EX_FAT_ARROW, EX_PIPE)
+        return GeneratedParserUtilBase.recursion_guard_(builder, level, "mapAssocPairStart") && scanForTopLevel(builder, EX_FAT_ARROW, EX_PIPE)
     }
 
     /**
@@ -214,11 +182,11 @@ object ExParserUtil {
         }
         val tokenType = builder.tokenType
         val result = tokenType == null ||
-            tokenType == EX_COMMA ||
-            tokenType == EX_RBRACE ||
-            tokenType == EX_RPAREN ||
-            tokenType == EX_RBRACKET ||
-            tokenType == EX_FAT_ARROW
+                tokenType == EX_COMMA ||
+                tokenType == EX_RBRACE ||
+                tokenType == EX_RPAREN ||
+                tokenType == EX_RBRACKET ||
+                tokenType == EX_FAT_ARROW
         marker.rollbackTo()
         return result
     }

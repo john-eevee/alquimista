@@ -34,22 +34,32 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
     private val disconnect = JButton("Disconnect")
     private val status = JLabel("Enter a distributed node name and connect.")
     private val summary = JLabel(" ")
-    private val model = object : DefaultTableModel(arrayOf("PID", "Registered name", "Memory (bytes)", "Message queue", "Reductions"), 0) {
+    private val model = object :
+        DefaultTableModel(arrayOf("PID", "Registered name", "Memory (bytes)", "Message queue", "Reductions"), 0) {
         override fun isCellEditable(row: Int, column: Int) = false
-        override fun getColumnClass(columnIndex: Int): Class<*> = if (columnIndex >= 2) java.lang.Long::class.java else String::class.java
+        override fun getColumnClass(columnIndex: Int): Class<*> =
+            if (columnIndex >= 2) java.lang.Long::class.java else String::class.java
     }
-    private val executor = Executors.newSingleThreadScheduledExecutor { task -> Thread(task, "Alquimista Observer").apply { isDaemon = true } }
+    private val executor = Executors.newSingleThreadScheduledExecutor { task ->
+        Thread(task, "Alquimista Observer").apply {
+            isDaemon = true
+        }
+    }
     private var job: ScheduledFuture<*>? = null
     private val sessionLock = Any()
     private var session: ObserverSession? = null
-    @Volatile private var generation = 0
+    @Volatile
+    private var generation = 0
 
     init {
         val controls = JPanel(FlowLayout(FlowLayout.LEADING)).apply {
-            add(JLabel("Node:")); add(node); add(JLabel("Cookie:")); add(cookie); add(longNames); add(connect); add(disconnect)
+            add(JLabel("Node:")); add(node); add(JLabel("Cookie:")); add(cookie); add(longNames); add(connect); add(
+            disconnect
+        )
         }
         val information = JPanel().apply { layout = BoxLayout(this, BoxLayout.Y_AXIS); add(status); add(summary) }
-        val top = JPanel(BorderLayout()).apply { add(controls, BorderLayout.NORTH); add(information, BorderLayout.SOUTH) }
+        val top =
+            JPanel(BorderLayout()).apply { add(controls, BorderLayout.NORTH); add(information, BorderLayout.SOUTH) }
         val table = JTable(model).apply { autoCreateRowSorter = true }
         panel.add(top, BorderLayout.NORTH)
         panel.add(JScrollPane(table), BorderLayout.CENTER)
@@ -60,9 +70,13 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
 
     private fun start() {
         val target = node.text.trim()
-        if (!ObserverConnection.isValidNode(target)) { status.text = "Enter a node name in name@host format."; return }
+        if (!ObserverConnection.isValidNode(target)) {
+            status.text = "Enter a node name in name@host format."; return
+        }
         val secret = String(cookie.password)
-        if (secret.contains('\n') || secret.contains('\r')) { status.text = "The cookie cannot contain a line break."; return }
+        if (secret.contains('\n') || secret.contains('\r')) {
+            status.text = "The cookie cannot contain a line break."; return
+        }
         val useLongNames = longNames.isSelected
         val current = ++generation
         connect.isEnabled = false
@@ -74,9 +88,16 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         job = executor.scheduleWithFixedDelay({
             try {
                 val active = synchronized(sessionLock) { session } ?: run {
-                    val created = ObserverConnection.open(command, target, secret, useLongNames, project.basePath?.let { java.io.File(it) })
+                    val created = ObserverConnection.open(
+                        command,
+                        target,
+                        secret,
+                        useLongNames,
+                        project.basePath?.let { java.io.File(it) })
                     synchronized(sessionLock) {
-                        if (current != generation) { created.close(); return@scheduleWithFixedDelay }
+                        if (current != generation) {
+                            created.close(); return@scheduleWithFixedDelay
+                        }
                         session = created
                     }
                     created
@@ -85,14 +106,27 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                 ApplicationManager.getApplication().invokeLater {
                     if (current == generation && !project.isDisposed) {
                         status.text = "Connected to ${snapshot.node}. Refreshing every 5 seconds."
-                        summary.text = "OTP ${snapshot.otpRelease}   |   Memory: ${snapshot.memoryBytes} bytes   |   Processes: ${snapshot.processCount}"
+                        summary.text =
+                            "OTP ${snapshot.otpRelease}   |   Memory: ${snapshot.memoryBytes} bytes   |   Processes: ${snapshot.processCount}"
                         model.rowCount = 0
-                        snapshot.processes.forEach { model.addRow(arrayOf<Any>(it.pid, it.name, it.memoryBytes, it.queueLength, it.reductions)) }
+                        snapshot.processes.forEach {
+                            model.addRow(
+                                arrayOf<Any>(
+                                    it.pid,
+                                    it.name,
+                                    it.memoryBytes,
+                                    it.queueLength,
+                                    it.reductions
+                                )
+                            )
+                        }
                     }
                 }
             } catch (error: Exception) {
                 synchronized(sessionLock) {
-                    if (session?.isAlive == false) { session?.close(); session = null }
+                    if (session?.isAlive == false) {
+                        session?.close(); session = null
+                    }
                 }
                 ApplicationManager.getApplication().invokeLater {
                     if (current == generation && !project.isDisposed) {

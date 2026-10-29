@@ -8,18 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
-import dev.alquimista.expert.grammar.EX_AFTER
-import dev.alquimista.expert.grammar.EX_ARROW
-import dev.alquimista.expert.grammar.EX_CATCH
-import dev.alquimista.expert.grammar.EX_COMMENT
-import dev.alquimista.expert.grammar.EX_DO
-import dev.alquimista.expert.grammar.EX_ELSE
-import dev.alquimista.expert.grammar.EX_EOL
-import dev.alquimista.expert.grammar.EX_FN
-import dev.alquimista.expert.grammar.EX_RESCUE
+import dev.alquimista.expert.grammar.*
 import dev.alquimista.expert.grammar.lexer.ExLexer
 
-internal data class HeexTag(val name: String, val start: Int, val end: Int, val closing: Boolean, val selfClosing: Boolean)
+internal data class HeexTag(
+    val name: String,
+    val start: Int,
+    val end: Int,
+    val closing: Boolean,
+    val selfClosing: Boolean
+)
 
 internal object HeexTags {
     fun read(text: CharSequence): List<HeexTag> {
@@ -27,8 +25,11 @@ internal object HeexTags {
         lexer.start(text)
         val tags = mutableListOf<HeexTag>()
         while (lexer.tokenType != null) {
-            val opening = lexer.tokenType == HEEX_TAG_DELIMITER && text.subSequence(lexer.tokenStart, lexer.tokenEnd).toString() in listOf("<", "</")
-            if (!opening) { lexer.advance(); continue }
+            val opening = lexer.tokenType == HEEX_TAG_DELIMITER && text.subSequence(lexer.tokenStart, lexer.tokenEnd)
+                .toString() in listOf("<", "</")
+            if (!opening) {
+                lexer.advance(); continue
+            }
             val start = lexer.tokenStart
             val closing = text.subSequence(lexer.tokenStart, lexer.tokenEnd).toString() == "</"
             lexer.advance()

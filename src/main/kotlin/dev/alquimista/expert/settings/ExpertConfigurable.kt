@@ -6,12 +6,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.lsp.api.LspClientManager
 import dev.alquimista.expert.lsp.ExpertLspServerSupportProvider
 import java.awt.GridLayout
-import javax.swing.JCheckBox
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.*
 
 class ExpertConfigurable(
     private val settingsProvider: () -> ExpertSettings = { ExpertSettings.getInstance() },
@@ -59,7 +54,8 @@ class ExpertConfigurable(
     override fun isModified(): Boolean = currentInput() != settingsProvider().state
 
     override fun apply() {
-        val input = currentInput() ?: throw ConfigurationException("Minimum workspace symbol query length must be a non-negative integer")
+        val input = currentInput()
+            ?: throw ConfigurationException("Minimum workspace symbol query length must be a non-negative integer")
         val settings = settingsProvider()
         if (input == settings.state) return
         settings.loadState(input)

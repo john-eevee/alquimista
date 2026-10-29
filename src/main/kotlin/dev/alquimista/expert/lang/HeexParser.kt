@@ -66,9 +66,11 @@ class HeexFoldingBuilder : FoldingBuilderEx(), DumbAware {
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> =
         PsiTreeUtil.collectElements(root) {
             it.node.elementType == HEEX_ELEMENT && it.textRange.length > 0 &&
-                document.getLineNumber(it.textRange.startOffset) < document.getLineNumber(it.textRange.endOffset - 1)
+                    document.getLineNumber(it.textRange.startOffset) < document.getLineNumber(it.textRange.endOffset - 1)
         }.map { FoldingDescriptor(it.node, it.textRange) }.toTypedArray()
 
-    override fun getPlaceholderText(node: ASTNode): String = "<${node.text.substringAfter('<').takeWhile { it.isLetterOrDigit() || it in ".:-_" }}>…"
+    override fun getPlaceholderText(node: ASTNode): String =
+        "<${node.text.substringAfter('<').takeWhile { it.isLetterOrDigit() || it in ".:-_" }}>…"
+
     override fun isCollapsedByDefault(node: ASTNode): Boolean = false
 }

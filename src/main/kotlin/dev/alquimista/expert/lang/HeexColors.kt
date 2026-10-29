@@ -1,7 +1,7 @@
 package dev.alquimista.expert.lang
 
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Defaults
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors as Defaults
 
 object HeexColors {
     private fun key(name: String, fallback: TextAttributesKey): TextAttributesKey =

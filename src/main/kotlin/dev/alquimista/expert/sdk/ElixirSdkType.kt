@@ -1,11 +1,6 @@
 package dev.alquimista.expert.sdk
 
-import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
-import com.intellij.openapi.projectRoots.SdkModel
-import com.intellij.openapi.projectRoots.SdkAdditionalData
-import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.*
 import org.jdom.Element
 import java.io.File
 import java.nio.file.Paths
@@ -65,7 +60,7 @@ class ElixirSdkType : SdkType("ELIXIR_SDK") {
         val home = sdk.homePath ?: return false
         val version = getVersionString(home) ?: return false
         val modificator = sdk.sdkModificator
-        modificator.setVersionString(version)
+        modificator.versionString = version
         modificator.commitChanges()
         return true
     }

@@ -3,12 +3,7 @@ package dev.alquimista.expert.lang
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.CaretListener
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -122,6 +117,7 @@ internal class HeexMatchingTagTracker(
         if (!editor.isDisposed) highlights.forEach { editor.markupModel.removeHighlighter(it) }
         highlights.clear()
     }
+
     override fun dispose() {
         if (disposed) return
         disposed = true

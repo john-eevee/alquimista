@@ -7,12 +7,12 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspServerListener
+import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
 import dev.alquimista.expert.settings.ExpertDownloader
-import dev.alquimista.expert.settings.MiseSupport
 import dev.alquimista.expert.settings.ExpertSettings
+import dev.alquimista.expert.settings.MiseSupport
 
 internal class ExpertLspServerDescriptor(project: Project) :
     ProjectWideLspClientDescriptor(project, "Expert") {

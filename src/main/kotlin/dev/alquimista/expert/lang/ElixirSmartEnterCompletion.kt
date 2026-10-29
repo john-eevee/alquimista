@@ -18,7 +18,8 @@ internal object ElixirSmartEnterCompletion {
             val type = lexer.tokenType
             val start = lexer.tokenStart
             if (start < caret && caret <= lexer.tokenEnd &&
-                (type == EX_COMMENT || type == EX_STRING_PART || type == EX_CHARLIST_PART)) return null
+                (type == EX_COMMENT || type == EX_STRING_PART || type == EX_CHARLIST_PART)
+            ) return null
             if (type == EX_COMMENT && start in lineStart until lineEnd) insertion = minOf(insertion, start)
             val opening = when (type) {
                 EX_LPAREN -> Opening(start, EX_RPAREN, ")")
@@ -34,7 +35,8 @@ internal object ElixirSmartEnterCompletion {
             lexer.advance()
         }
         while (insertion > lineStart && text[insertion - 1].isWhitespace()) insertion--
-        val missing = openings.filter { it.offset in lineStart until insertion }.asReversed().joinToString("") { it.text }
+        val missing =
+            openings.filter { it.offset in lineStart until insertion }.asReversed().joinToString("") { it.text }
         return if (missing.isEmpty()) null else insertion to missing
     }
 }
