@@ -30,12 +30,7 @@ class HeexFileType private constructor() : LanguageFileType(HeexLanguage.INSTANC
 
 class HeexParserDefinition : ParserDefinition {
     override fun createLexer(project: Project?) = HeexLexer()
-    override fun createParser(project: Project?): PsiParser = PsiParser { root, builder ->
-        val marker = builder.mark()
-        while (!builder.eof()) builder.advanceLexer()
-        marker.done(root)
-        builder.treeBuilt
-    }
+    override fun createParser(project: Project?): PsiParser = HeexParser()
     override fun getFileNodeType(): IFileElementType = FILE
     override fun getCommentTokens(): TokenSet = TokenSet.create(HEEX_COMMENT)
     override fun getStringLiteralElements(): TokenSet = TokenSet.create(HEEX_STRING)

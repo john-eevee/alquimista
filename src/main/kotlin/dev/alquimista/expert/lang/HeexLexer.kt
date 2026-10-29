@@ -154,7 +154,7 @@ class HeexLexer : LexerBase() {
                         if (closing) {
                             val match = stack.indexOfLast { it.name.equals(name, true) }
                             if (match >= 0) while (stack.size > match) stack.removeAt(stack.lastIndex)
-                        } else if (!selfClosing && name.lowercase() !in VOID_TAGS) stack.add(Tag(name, disabled))
+                        } else if (!selfClosing && name.lowercase() !in HEEX_VOID_TAGS) stack.add(Tag(name, disabled))
                     }
                 }
                 text[pos] == '&' -> {
@@ -173,7 +173,6 @@ class HeexLexer : LexerBase() {
         return result
     }
 
-    companion object {
-        private val VOID_TAGS = setOf("area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr")
-    }
 }
+
+internal val HEEX_VOID_TAGS = setOf("area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr")

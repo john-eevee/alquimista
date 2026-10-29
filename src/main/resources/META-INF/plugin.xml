@@ -55,6 +55,7 @@
                           implementationClass="dev.alquimista.expert.lang.ElixirSmartEnterProcessor"/>
         <lang.commenter language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirCommenter"/>
         <lang.braceMatcher language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirBraceMatcher"/>
+        <lang.foldingBuilder language="HEEx" implementationClass="dev.alquimista.expert.lang.HeexFoldingBuilder"/>
         <lang.foldingBuilder language="Elixir" implementationClass="dev.alquimista.expert.lang.ElixirFoldingBuilder"/>
         <lineIndentProvider implementation="dev.alquimista.expert.lang.ElixirLineIndentProvider"/>
         <externalAnnotator language="Elixir" implementationClass="dev.alquimista.expert.credo.CredoExternalAnnotator"/>
