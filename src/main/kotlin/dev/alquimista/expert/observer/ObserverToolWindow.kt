@@ -46,6 +46,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         }
     }
     private var job: ScheduledFuture<*>? = null
+    private val charts = ObserverCharts()
     private val sessionLock = Any()
     private var session: ObserverSession? = null
     @Volatile
@@ -62,7 +63,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
             JPanel(BorderLayout()).apply { add(controls, BorderLayout.NORTH); add(information, BorderLayout.SOUTH) }
         val table = JTable(model).apply { autoCreateRowSorter = true }
         panel.add(top, BorderLayout.NORTH)
-        panel.add(JScrollPane(table), BorderLayout.CENTER)
+        val tabs = JTabbedPane().apply { addTab("Processes", JScrollPane(table)); addTab("Load charts", charts) }
+        panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
         disconnect.addActionListener { stop() }
@@ -108,6 +110,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                         status.text = "Connected to ${snapshot.node}. Refreshing every 5 seconds."
                         summary.text =
                             "OTP ${snapshot.otpRelease}   |   Memory: ${snapshot.memoryBytes} bytes   |   Processes: ${snapshot.processCount}"
+                        charts.add(snapshot)
                         model.rowCount = 0
                         snapshot.processes.forEach {
                             model.addRow(
@@ -145,7 +148,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
-        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0
+        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; charts.clear()
     }
 
     override fun dispose() {

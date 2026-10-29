@@ -16,6 +16,13 @@ case net_adm:ping(Target) of
     case {Release, Memory, Pids} of
       {R, M, Ps} when is_list(R), is_integer(M), is_list(Ps) ->
         io:format("OK\t~s\t~s\t~B\t~B~n", [NodeLine, R, M, length(Ps)]),
+        Mem = Call(memory, []),
+        Io = Call(statistics, [io]),
+        case {Mem, Io} of
+          {Ms, {{input, In}, {output, Out}}} when is_list(Ms), is_integer(In), is_integer(Out) ->
+            io:format("M\t~B\t~B\t~B\t~B\t~B\t~B\t~B~n", [proplists:get_value(processes, Ms, 0), proplists:get_value(atom, Ms, 0), proplists:get_value(binary, Ms, 0), proplists:get_value(code, Ms, 0), proplists:get_value(ets, Ms, 0), In, Out]);
+          _ -> ok
+        end,
         lists:foreach(fun(Pid) ->
           case Call(process_info, [Pid, [registered_name, memory, message_queue_len, reductions]]) of
             Info when is_list(Info) ->

@@ -1,0 +1,62 @@
+package dev.alquimista.expert.observer
+
+import java.awt.BorderLayout
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.Graphics
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.UIManager
+import kotlin.math.max
+
+/** Memory samples and I/O bytes per second; a reset counter starts a new series. */
+internal class ObserverHistory(private val limit: Int = 60) {
+    data class Sample(val timeMillis: Long, val memory: Long, val inputPerSecond: Long, val outputPerSecond: Long)
+    private var previous: Pair<Long, ObserverMetrics>? = null
+    val samples = ArrayList<Sample>()
+    fun add(time: Long, snapshot: ObserverSnapshot) {
+        val old = previous
+        val elapsed = if (old == null) 0 else time - old.first
+        fun rate(value: Long, previousValue: Long): Long =
+            if (elapsed <= 0 || value < previousValue) 0 else ((value - previousValue).toDouble() * 1000 / elapsed).toLong()
+        samples.add(Sample(time, snapshot.memoryBytes, rate(snapshot.metrics.inputBytes, old?.second?.inputBytes ?: snapshot.metrics.inputBytes), rate(snapshot.metrics.outputBytes, old?.second?.outputBytes ?: snapshot.metrics.outputBytes)))
+        if (samples.size > limit) samples.removeAt(0)
+        previous = time to snapshot.metrics
+    }
+    fun clear() { samples.clear(); previous = null }
+}
+
+internal class ObserverCharts : JPanel(BorderLayout()) {
+    private val history = ObserverHistory()
+    private val memory = Graph("Total memory (bytes)") { it.memory }
+    private val input = Graph("Input (bytes / second)") { it.inputPerSecond }
+    private val output = Graph("Output (bytes / second)") { it.outputPerSecond }
+    init {
+        val graphs = JPanel(java.awt.GridLayout(3, 1, 0, 8))
+        graphs.add(memory); graphs.add(input); graphs.add(output); add(graphs)
+    }
+    fun add(snapshot: ObserverSnapshot) {
+        history.add(System.currentTimeMillis(), snapshot)
+        listOf(memory, input, output).forEach { it.samples = history.samples.toList(); it.repaint() }
+    }
+    fun clear() { history.clear(); listOf(memory, input, output).forEach { it.samples = emptyList(); it.repaint() } }
+    private class Graph(title: String, private val value: (ObserverHistory.Sample) -> Long) : JPanel(BorderLayout()) {
+        var samples: List<ObserverHistory.Sample> = emptyList()
+        init { add(JLabel(title), BorderLayout.NORTH); preferredSize = Dimension(400, 130) }
+        override fun paintComponent(g: Graphics) {
+            super.paintComponent(g)
+            val values = samples.map(value)
+            if (values.size < 2) return
+            val ceiling = max(1L, values.maxOrNull() ?: 1L).toDouble()
+            val startY = insets.top + 26
+            val plotHeight = (height - startY - insets.bottom - 8).coerceAtLeast(1)
+            val plotWidth = (width - insets.left - insets.right - 12).coerceAtLeast(1)
+            g.color = UIManager.getColor("Component.focusColor") ?: UIManager.getColor("Label.foreground") ?: Color.GRAY
+            for (i in 1 until values.size) {
+                fun x(index: Int) = insets.left + 6 + index * plotWidth / (values.size - 1)
+                fun y(index: Int) = startY + plotHeight - (values[index] / ceiling * plotHeight).toInt()
+                g.drawLine(x(i - 1), y(i - 1), x(i), y(i))
+            }
+        }
+    }
+}

@@ -42,4 +42,29 @@ class ObserverSnapshotTest {
         }
     }
 
+    @Test fun `parses memory categories and io counters for load charts`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nM\t2000\t100\t200\t300\t400\t1024\t2048\n")
+        assertEquals(2000L, snapshot.metrics.processMemory)
+        assertEquals(100L, snapshot.metrics.atomMemory)
+        assertEquals(200L, snapshot.metrics.binaryMemory)
+        assertEquals(300L, snapshot.metrics.codeMemory)
+        assertEquals(400L, snapshot.metrics.etsMemory)
+        assertEquals(1024L, snapshot.metrics.inputBytes)
+        assertEquals(2048L, snapshot.metrics.outputBytes)
+    }
+
+    @Test fun `chart history computes rates and handles counter reset`() {
+        val history = ObserverHistory(2)
+        fun sample(input: Long, output: Long) = ObserverSnapshot("node", "29", 4096, 1, emptyList(), ObserverMetrics(inputBytes = input, outputBytes = output))
+        history.add(1000, sample(100, 200))
+        history.add(3000, sample(300, 600))
+        assertEquals(100, history.samples.last().inputPerSecond)
+        assertEquals(200, history.samples.last().outputPerSecond)
+        history.add(4000, sample(10, 20))
+        assertEquals(2, history.samples.size)
+        assertEquals(0, history.samples.last().inputPerSecond)
+        history.clear()
+        assertTrue(history.samples.isEmpty())
+    }
+
 }

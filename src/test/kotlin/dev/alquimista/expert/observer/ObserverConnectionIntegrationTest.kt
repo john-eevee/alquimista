@@ -33,6 +33,8 @@ class ObserverConnectionIntegrationTest {
             assertTrue(initial.memoryBytes > 0)
             assertTrue(initial.processCount > 0)
             assertTrue(initial.processes.isNotEmpty())
+            assertTrue("Expected real memory metrics", initial.metrics.processMemory > 0)
+            assertTrue("Expected real ETS memory metrics", initial.metrics.etsMemory > 0)
             val session = ObserverConnection.open(listOf(executable.absolutePath), "$node@$host", cookie, false)
             val processId = session.processId
             try {

@@ -13,12 +13,23 @@ data class ObservedProcess(
     val reductions: Long
 )
 
+data class ObserverMetrics(
+    val processMemory: Long = 0,
+    val atomMemory: Long = 0,
+    val binaryMemory: Long = 0,
+    val codeMemory: Long = 0,
+    val etsMemory: Long = 0,
+    val inputBytes: Long = 0,
+    val outputBytes: Long = 0,
+)
+
 data class ObserverSnapshot(
     val node: String,
     val otpRelease: String,
     val memoryBytes: Long,
     val processCount: Int,
-    val processes: List<ObservedProcess>
+    val processes: List<ObservedProcess>,
+    val metrics: ObserverMetrics = ObserverMetrics(),
 ) {
     companion object {
         fun parse(output: String): ObserverSnapshot {
@@ -39,7 +50,12 @@ data class ObserverSnapshot(
                     row[5].toLong()
                 )
             }
-            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes)
+            val metrics = lines.firstOrNull { it.startsWith("M\t") }?.let { line ->
+                val values = line.split('\t')
+                require(values.size == 8) { "Invalid Observer metrics response" }
+                ObserverMetrics(values[1].toLong(), values[2].toLong(), values[3].toLong(), values[4].toLong(), values[5].toLong(), values[6].toLong(), values[7].toLong())
+            } ?: ObserverMetrics()
+            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics)
         }
     }
 }
