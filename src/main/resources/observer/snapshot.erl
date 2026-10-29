@@ -164,6 +164,14 @@ case net_adm:ping(Target) of
           end, lists:zip(AppList, lists:seq(1, length(AppList))));
           _ -> ok
         end,
+        Ports = rpc:call(Target, observer_backend, get_port_list, [], 5000),
+        case Ports of
+          PortList when is_list(PortList) -> lists:foreach(fun(PortInfo) ->
+            Value = fun(Key) -> proplists:get_value(Key, PortInfo, 0) end,
+            io:format("R\t~s\t~s\t~s\t~B\t~B\t~B\t~s~n", [Encode(proplists:get_value(port_id, PortInfo)), B64(unicode:characters_to_binary(proplists:get_value(name, PortInfo, ""))), Encode(proplists:get_value(connected, PortInfo)), Value(input), Value(output), Value(queue_size), B64(unicode:characters_to_binary(io_lib:format("~P", [PortInfo, 20])))] )
+          end, PortList);
+          _ -> ok
+        end,
         Tables = rpc:call(Target, ets, all, [], 5000),
         case Tables of
           Ts when is_list(Ts) -> lists:foreach(fun(Tid) ->

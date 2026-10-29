@@ -36,6 +36,7 @@ class ObserverConnectionIntegrationTest {
             assertTrue("Expected real memory metrics", initial.metrics.processMemory > 0)
             assertTrue("Expected real ETS memory metrics", initial.metrics.etsMemory > 0)
             assertTrue("Expected real ETS tables", initial.tables.isNotEmpty())
+            assertTrue("Expected real ports", initial.ports.isNotEmpty())
             assertTrue("Expected applications and supervisors", initial.supervision.any { it.kind == "supervisor" })
             val session = ObserverConnection.open(listOf(executable.absolutePath), "$node@$host", cookie, false)
             val processId = session.processId

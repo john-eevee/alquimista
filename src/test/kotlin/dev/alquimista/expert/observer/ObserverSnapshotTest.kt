@@ -107,4 +107,16 @@ class ObserverSnapshotTest {
         assertEquals(0L, history.samples.last().schedulerPercent)
     }
 
+    @Test fun `parses port information`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nR\tI1BvcnQ8MC4xPg==\tY2F0\tPDAuMS4wPg==\t12\t34\t5\tZGV0YWlscw==\n")
+        val port = snapshot.ports.single()
+        assertEquals("#Port<0.1>", port.id)
+        assertEquals("cat", port.name)
+        assertEquals("<0.1.0>", port.owner)
+        assertEquals(12L, port.inputBytes)
+        assertEquals(34L, port.outputBytes)
+        assertEquals(5L, port.queueBytes)
+        assertEquals("details", port.details)
+    }
+
 }
