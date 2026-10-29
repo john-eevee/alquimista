@@ -38,7 +38,7 @@ class ObserverSnapshotTest {
     @Test fun `rejects malformed response and cookie with line breaks`() {
         assertThrows(IllegalArgumentException::class.java) { ObserverSnapshot.parse("OK\tnode\t29\tbad\t1\n") }
         assertThrows(IllegalArgumentException::class.java) {
-            ObserverConnection.snapshot(listOf("erl"), "app@host", "bad\ncookie", false)
+            ObserverConnection.open(listOf("erl"), "app@host", "bad\ncookie", false)
         }
     }
 

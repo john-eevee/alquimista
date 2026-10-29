@@ -2,6 +2,10 @@ NodeLine = string:trim(io:get_line("")),
 CookieLine = string:trim(io:get_line("")),
 case CookieLine of "" -> ok; _ -> erlang:set_cookie(node(), list_to_atom(CookieLine)) end,
 Target = list_to_atom(NodeLine),
+Loop = fun Refresh(Self) ->
+  case io:get_line("") of
+    eof -> ok;
+    "refresh\n" ->
 case net_adm:ping(Target) of
   pang -> io:format("ERROR\tunreachable~n");
   pong ->
@@ -25,4 +29,10 @@ case net_adm:ping(Target) of
       _ -> io:format("ERROR\tUnable to read node information~n")
     end
 end,
+io:format("END~n"),
+Self(Self);
+    _ -> Self(Self)
+  end
+end,
+Loop(Loop),
 halt().

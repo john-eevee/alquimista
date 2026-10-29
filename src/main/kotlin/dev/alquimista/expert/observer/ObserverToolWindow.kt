@@ -40,6 +40,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
     }
     private val executor = Executors.newSingleThreadScheduledExecutor { task -> Thread(task, "Alquimista Observer").apply { isDaemon = true } }
     private var job: ScheduledFuture<*>? = null
+    private val sessionLock = Any()
+    private var session: ObserverSession? = null
     @Volatile private var generation = 0
 
     init {
@@ -71,7 +73,15 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         val command = listOf(resolved.executable) + resolved.arguments
         job = executor.scheduleWithFixedDelay({
             try {
-                val snapshot = ObserverConnection.snapshot(command, target, secret, useLongNames, project.basePath?.let { java.io.File(it) })
+                val active = synchronized(sessionLock) { session } ?: run {
+                    val created = ObserverConnection.open(command, target, secret, useLongNames, project.basePath?.let { java.io.File(it) })
+                    synchronized(sessionLock) {
+                        if (current != generation) { created.close(); return@scheduleWithFixedDelay }
+                        session = created
+                    }
+                    created
+                }
+                val snapshot = active.snapshot()
                 ApplicationManager.getApplication().invokeLater {
                     if (current == generation && !project.isDisposed) {
                         status.text = "Connected to ${snapshot.node}. Refreshing every 5 seconds."
@@ -81,6 +91,9 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                     }
                 }
             } catch (error: Exception) {
+                synchronized(sessionLock) {
+                    if (session?.isAlive == false) { session?.close(); session = null }
+                }
                 ApplicationManager.getApplication().invokeLater {
                     if (current == generation && !project.isDisposed) {
                         status.text = "Connection failed: ${error.message ?: error.javaClass.simpleName}. Retrying…"
@@ -94,11 +107,17 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
     private fun stop() {
         generation++
         job?.cancel(true); job = null
+        synchronized(sessionLock) { session?.close(); session = null }
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
         status.text = "Disconnected."; summary.text = " "; model.rowCount = 0
     }
 
-    override fun dispose() { generation++; job?.cancel(true); executor.shutdownNow() }
+    override fun dispose() {
+        generation++
+        job?.cancel(true)
+        synchronized(sessionLock) { session?.close(); session = null }
+        executor.shutdownNow()
+    }
 }

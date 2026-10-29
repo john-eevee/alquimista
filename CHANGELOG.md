@@ -24,6 +24,8 @@
 
 ### Changed
 
+- Keep the Observer hidden node alive between refreshes and close it on disconnect.
+
 - Renamed the project to Alquimista. The plugin ID and stored settings identifiers changed; see the README for upgrade guidance.
 - Use Expert for editor formatting; the separate Mix action formats the project.
 - Highlight Elixir declaration macros, modules, and function names using the active color scheme.
