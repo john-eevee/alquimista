@@ -23,6 +23,22 @@ Action = fun(Kind, Encoded) ->
   catch _:_ -> io:format("ERROR\tInvalid process identifier~n") end,
   io:format("END~n")
 end,
+TableAction = fun(Encoded) ->
+  try
+    Tid = binary_to_term(base64:decode(string:trim(Encoded)), [safe]),
+    Available = rpc:call(Target, ets, all, [], 5000),
+    true = is_list(Available) andalso lists:member(Tid, Available),
+    Result = rpc:call(Target, ets, select, [Tid, [{'_', [], ['$_']}], 200], 5000),
+    case Result of
+      {Objects, _} when is_list(Objects) ->
+        Value = unicode:characters_to_binary(io_lib:format("~P", [Objects, 25])),
+        io:format("RESULT\t~s~n", [base64:encode(Value)]);
+      '$end_of_table' -> io:format("RESULT\tW10=~n");
+      _ -> io:format("ERROR\tTable is unavailable or not readable~n")
+    end
+  catch _:_ -> io:format("ERROR\tInvalid table identifier~n") end,
+  io:format("END~n")
+end,
 Loop = fun Refresh(Self) ->
   case io:get_line("") of
     eof -> ok;
@@ -86,7 +102,7 @@ case net_adm:ping(Target) of
           Ts when is_list(Ts) -> lists:foreach(fun(Tid) ->
             case rpc:call(Target, ets, info, [Tid], 5000) of
               Info when is_list(Info) ->
-                io:format("T\t~s\t~s\t~s\t~B\t~B\t~s\t~s~n", [Encode(proplists:get_value(name, Info)), Encode(Tid), Encode(proplists:get_value(owner, Info)), proplists:get_value(size, Info, 0), proplists:get_value(memory, Info, 0), Encode(proplists:get_value(protection, Info)), Encode(proplists:get_value(type, Info))]);
+                io:format("T\t~s\t~s\t~s\t~B\t~B\t~s\t~s\t~s~n", [Encode(proplists:get_value(name, Info)), Encode(Tid), Encode(proplists:get_value(owner, Info)), proplists:get_value(size, Info, 0), proplists:get_value(memory, Info, 0), Encode(proplists:get_value(protection, Info)), Encode(proplists:get_value(type, Info)), base64:encode(term_to_binary(Tid))]);
               _ -> ok
             end
           end, Ts);
@@ -107,6 +123,7 @@ case net_adm:ping(Target) of
 end,
 io:format("END~n"),
 Self(Self);
+    "table\t" ++ Token -> TableAction(Token), Self(Self);
     "inspect\t" ++ Token -> Action(inspect, Token), Self(Self);
     "kill\t" ++ Token -> Action(kill, Token), Self(Self);
     _ -> Self(Self)

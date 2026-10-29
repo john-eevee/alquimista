@@ -51,6 +51,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
     }
     private var job: ScheduledFuture<*>? = null
     private var processes: List<ObservedProcess> = emptyList()
+    private var tables: List<ObservedTable> = emptyList()
     private lateinit var processTable: JTable
     private val charts = ObserverCharts()
     private val treeRoot = javax.swing.tree.DefaultMutableTreeNode("Applications")
@@ -86,7 +87,34 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         }
         panel.add(top, BorderLayout.NORTH)
         val etsTable = JTable(tableModel).apply { autoCreateRowSorter = true }
-        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", JScrollPane(etsTable)); addTab("Applications", JScrollPane(tree)) }
+        fun showTable() {
+            val selected = etsTable.selectedRow
+            if (selected < 0) { status.text = "Select an ETS table first."; return }
+            val item = tables.getOrNull(etsTable.convertRowIndexToModel(selected)) ?: return
+            val active = synchronized(sessionLock) { session } ?: return
+            val current = generation
+            executor.execute {
+                try {
+                    val contents = active.tableContents(item)
+                    ApplicationManager.getApplication().invokeLater {
+                        if (current == generation && !project.isDisposed) {
+                            val text = JTextArea(contents, 25, 90).apply { isEditable = false; caretPosition = 0 }
+                            JOptionPane.showMessageDialog(panel, JScrollPane(text), "${item.name} — first 200 objects", JOptionPane.INFORMATION_MESSAGE)
+                        }
+                    }
+                } catch (error: Exception) {
+                    ApplicationManager.getApplication().invokeLater { if (current == generation && !project.isDisposed) status.text = "ETS inspection failed: ${error.message}" }
+                }
+            }
+        }
+        etsTable.addMouseListener(object : java.awt.event.MouseAdapter() {
+            override fun mouseClicked(event: java.awt.event.MouseEvent) { if (event.clickCount == 2) showTable() }
+        })
+        val etsPanel = JPanel(BorderLayout()).apply {
+            add(JScrollPane(etsTable), BorderLayout.CENTER)
+            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(JButton("Show table contents").apply { addActionListener { showTable() } }) }, BorderLayout.SOUTH)
+        }
+        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", etsPanel); addTab("Applications", JScrollPane(tree)) }
         panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
@@ -147,6 +175,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                         treeModel.reload()
                         expanded.forEach { id -> nodes[id]?.let { tree.expandPath(javax.swing.tree.TreePath(it.path)) } }
                         tableModel.rowCount = 0
+                        tables = snapshot.tables
                         snapshot.tables.forEach { tableModel.addRow(arrayOf<Any>(it.name, it.id, it.owner, it.size, it.memoryWords, it.protection, it.type)) }
                         model.rowCount = 0
                         processes = snapshot.processes
@@ -215,7 +244,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
-        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; processes = emptyList(); treeRoot.removeAllChildren(); treeModel.reload(); charts.clear()
+        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; processes = emptyList(); tables = emptyList(); treeRoot.removeAllChildren(); treeModel.reload(); charts.clear()
     }
 
     override fun dispose() {

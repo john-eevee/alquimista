@@ -16,7 +16,7 @@ data class ObservedProcess(
 
 data class ObservedTreeNode(val id: String, val parentId: String, val label: String, val pid: String, val kind: String)
 
-data class ObservedTable(val name: String, val id: String, val owner: String, val size: Long, val memoryWords: Long, val protection: String, val type: String)
+data class ObservedTable(val name: String, val id: String, val owner: String, val size: Long, val memoryWords: Long, val protection: String, val type: String, val token: String = "")
 
 data class ObserverMetrics(
     val processMemory: Long = 0,
@@ -66,8 +66,8 @@ data class ObserverSnapshot(
             fun decode(value: String) = String(Base64.getDecoder().decode(value), Charsets.UTF_8)
             val tables = lines.filter { it.startsWith("T\t") }.map { line ->
                 val row = line.split('\t')
-                require(row.size == 8) { "Invalid Observer table response" }
-                ObservedTable(decode(row[1]), decode(row[2]), decode(row[3]), row[4].toLong(), row[5].toLong(), decode(row[6]), decode(row[7]))
+                require(row.size == 8 || row.size == 9) { "Invalid Observer table response" }
+                ObservedTable(decode(row[1]), decode(row[2]), decode(row[3]), row[4].toLong(), row[5].toLong(), decode(row[6]), decode(row[7]), row.getOrElse(8) { "" })
             }
             val supervision = lines.filter { it.startsWith("S\t") }.map { line ->
                 val row = line.split('\t')
@@ -145,9 +145,14 @@ class ObserverSession internal constructor(private val process: Process, node: S
     @Synchronized
     fun killProcess(process: ObservedProcess) { action("kill", process) }
 
-    private fun action(operation: String, process: ObservedProcess): String {
-        require(process.token.matches(Regex("[A-Za-z0-9+/=]+"))) { "Invalid process identifier" }
-        val response = request("$operation\t${process.token}")
+    @Synchronized
+    fun tableContents(table: ObservedTable): String = action("table", table.token)
+
+    private fun action(operation: String, process: ObservedProcess): String = action(operation, process.token)
+
+    private fun action(operation: String, token: String): String {
+        require(token.matches(Regex("[A-Za-z0-9+/=]+"))) { "Invalid identifier" }
+        val response = request("$operation\t$token")
         val error = response.lineSequence().firstOrNull { it.startsWith("ERROR\t") }
         if (error != null) error(error.substringAfter('\t'))
         val result = response.lineSequence().firstOrNull { it.startsWith("RESULT\t") } ?: error("Invalid Observer response")
