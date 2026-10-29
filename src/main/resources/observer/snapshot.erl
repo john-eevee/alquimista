@@ -24,6 +24,42 @@ case net_adm:ping(Target) of
           _ -> ok
         end,
         Encode = fun(Term) -> base64:encode(unicode:characters_to_binary(io_lib:format("~tp", [Term]))) end,
+        Text = fun(Term) -> unicode:characters_to_binary(io_lib:format("~tp", [Term])) end,
+        B64 = fun(Value) -> base64:encode(Value) end,
+        TreeLine = fun(Id, Parent, Label, Pid, Kind) -> io:format("S\t~s\t~s\t~s\t~s\t~s~n", [B64(Id), B64(Parent), B64(Label), B64(Pid), B64(Kind)]) end,
+        Walk = fun Visit(Self, Pid, Id, Depth) ->
+          case Depth < 32 andalso is_pid(Pid) of
+            true -> case rpc:call(Target, supervisor, which_children, [Pid], 2000) of
+              Children when is_list(Children) ->
+                lists:foreach(fun({{ChildId, ChildPid, Type, _}, Index}) ->
+                  ChildPath = <<Id/binary, "/", (integer_to_binary(Index))/binary>>,
+                  PidText = case is_pid(ChildPid) of true -> unicode:characters_to_binary(pid_to_list(ChildPid)); false -> Text(ChildPid) end,
+                  TreeLine(ChildPath, Id, Text(ChildId), PidText, Text(Type)),
+                  case Type of supervisor -> Self(Self, ChildPid, ChildPath, Depth + 1); _ -> ok end
+                end, lists:zip(Children, lists:seq(1, length(Children))));
+              _ -> ok
+            end;
+            false -> ok
+          end
+        end,
+        Apps = rpc:call(Target, application, which_applications, [], 5000),
+        case Apps of
+          AppList when is_list(AppList) -> lists:foreach(fun({{App, _, _}, Index}) ->
+            AppId = integer_to_binary(Index),
+            TreeLine(AppId, <<>>, Text(App), <<>>, <<"application">>),
+            case rpc:call(Target, application_controller, get_master, [App], 2000) of
+              Master when is_pid(Master) -> case rpc:call(Target, application_master, get_child, [Master], 2000) of
+                {Root, _} when is_pid(Root) ->
+                  RootId = <<AppId/binary, "/0">>,
+                  TreeLine(RootId, AppId, Text(App), unicode:characters_to_binary(pid_to_list(Root)), <<"supervisor">>),
+                  Walk(Walk, Root, RootId, 0);
+                _ -> ok
+              end;
+              _ -> ok
+            end
+          end, lists:zip(AppList, lists:seq(1, length(AppList))));
+          _ -> ok
+        end,
         Tables = rpc:call(Target, ets, all, [], 5000),
         case Tables of
           Ts when is_list(Ts) -> lists:foreach(fun(Tid) ->

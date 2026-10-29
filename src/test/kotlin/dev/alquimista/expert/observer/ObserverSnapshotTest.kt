@@ -79,4 +79,12 @@ class ObserverSnapshotTest {
         assertEquals("set", table.type)
     }
 
+    @Test fun `parses supervision tree links`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nS\tYXBw\t\tYXBw\t\tYXBwbGljYXRpb24=\nS\tYXBwLzA=\tYXBw\tcm9vdA==\tPDAuMS4wPg==\tc3VwZXJ2aXNvcg==\n")
+        assertEquals(2, snapshot.supervision.size)
+        assertEquals("app", snapshot.supervision[1].parentId)
+        assertEquals("root", snapshot.supervision[1].label)
+        assertEquals("<0.1.0>", snapshot.supervision[1].pid)
+    }
+
 }

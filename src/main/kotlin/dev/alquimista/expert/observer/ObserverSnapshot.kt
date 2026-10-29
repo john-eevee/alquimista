@@ -13,6 +13,8 @@ data class ObservedProcess(
     val reductions: Long
 )
 
+data class ObservedTreeNode(val id: String, val parentId: String, val label: String, val pid: String, val kind: String)
+
 data class ObservedTable(val name: String, val id: String, val owner: String, val size: Long, val memoryWords: Long, val protection: String, val type: String)
 
 data class ObserverMetrics(
@@ -33,6 +35,7 @@ data class ObserverSnapshot(
     val processes: List<ObservedProcess>,
     val metrics: ObserverMetrics = ObserverMetrics(),
     val tables: List<ObservedTable> = emptyList(),
+    val supervision: List<ObservedTreeNode> = emptyList(),
 ) {
     companion object {
         fun parse(output: String): ObserverSnapshot {
@@ -64,7 +67,12 @@ data class ObserverSnapshot(
                 require(row.size == 8) { "Invalid Observer table response" }
                 ObservedTable(decode(row[1]), decode(row[2]), decode(row[3]), row[4].toLong(), row[5].toLong(), decode(row[6]), decode(row[7]))
             }
-            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables)
+            val supervision = lines.filter { it.startsWith("S\t") }.map { line ->
+                val row = line.split('\t')
+                require(row.size == 6) { "Invalid supervision response" }
+                ObservedTreeNode(decode(row[1]), decode(row[2]), decode(row[3]), decode(row[4]), decode(row[5]))
+            }
+            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables, supervision)
         }
     }
 }

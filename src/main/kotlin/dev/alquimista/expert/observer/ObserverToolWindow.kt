@@ -51,6 +51,12 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
     }
     private var job: ScheduledFuture<*>? = null
     private val charts = ObserverCharts()
+    private val treeRoot = javax.swing.tree.DefaultMutableTreeNode("Applications")
+    private val treeModel = javax.swing.tree.DefaultTreeModel(treeRoot)
+    private val tree = JTree(treeModel)
+    private data class TreeEntry(val item: ObservedTreeNode) {
+        override fun toString(): String = if (item.pid.isEmpty()) item.label else "${item.label}  ${item.pid} (${item.kind})"
+    }
     private val sessionLock = Any()
     private var session: ObserverSession? = null
     @Volatile
@@ -68,7 +74,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         val table = JTable(model).apply { autoCreateRowSorter = true }
         panel.add(top, BorderLayout.NORTH)
         val etsTable = JTable(tableModel).apply { autoCreateRowSorter = true }
-        val tabs = JTabbedPane().apply { addTab("Processes", JScrollPane(table)); addTab("Load charts", charts); addTab("ETS", JScrollPane(etsTable)) }
+        val tabs = JTabbedPane().apply { addTab("Processes", JScrollPane(table)); addTab("Load charts", charts); addTab("ETS", JScrollPane(etsTable)); addTab("Applications", JScrollPane(tree)) }
         panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
@@ -116,6 +122,18 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                         summary.text =
                             "OTP ${snapshot.otpRelease}   |   Memory: ${snapshot.memoryBytes} bytes   |   Processes: ${snapshot.processCount}"
                         charts.add(snapshot)
+                        val expanded = tree.getExpandedDescendants(javax.swing.tree.TreePath(treeRoot.path))?.toList()
+                            ?.mapNotNull { ((it.lastPathComponent as? javax.swing.tree.DefaultMutableTreeNode)?.userObject as? TreeEntry)?.item?.id }
+                            ?.toSet() ?: emptySet()
+                        val nodes = mutableMapOf<String, javax.swing.tree.DefaultMutableTreeNode>()
+                        treeRoot.removeAllChildren()
+                        snapshot.supervision.forEach { item ->
+                            val child = javax.swing.tree.DefaultMutableTreeNode(TreeEntry(item))
+                            (nodes[item.parentId] ?: treeRoot).add(child)
+                            nodes[item.id] = child
+                        }
+                        treeModel.reload()
+                        expanded.forEach { id -> nodes[id]?.let { tree.expandPath(javax.swing.tree.TreePath(it.path)) } }
                         tableModel.rowCount = 0
                         snapshot.tables.forEach { tableModel.addRow(arrayOf<Any>(it.name, it.id, it.owner, it.size, it.memoryWords, it.protection, it.type)) }
                         model.rowCount = 0
@@ -155,7 +173,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
-        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; charts.clear()
+        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; treeRoot.removeAllChildren(); treeModel.reload(); charts.clear()
     }
 
     override fun dispose() {
