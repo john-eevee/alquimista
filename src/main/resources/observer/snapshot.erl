@@ -2,6 +2,27 @@ NodeLine = string:trim(io:get_line("")),
 CookieLine = string:trim(io:get_line("")),
 case CookieLine of "" -> ok; _ -> erlang:set_cookie(node(), list_to_atom(CookieLine)) end,
 Target = list_to_atom(NodeLine),
+Action = fun(Kind, Encoded) ->
+  try
+    Pid = binary_to_term(base64:decode(string:trim(Encoded)), [safe]),
+    true = is_pid(Pid) andalso node(Pid) =:= Target,
+    case Kind of
+      inspect ->
+        Info = rpc:call(Target, erlang, process_info, [Pid, [registered_name, current_function, initial_call, status, message_queue_len, messages, dictionary, current_stacktrace, links, monitors, monitored_by, memory, reductions]], 5000),
+        case Info of
+          undefined -> io:format("ERROR\tProcess no longer exists~n");
+          {badrpc, _} -> io:format("ERROR\tCould not inspect process~n");
+          _ -> io:format("RESULT\t~s~n", [base64:encode(unicode:characters_to_binary(io_lib:format("~P", [Info, 25])))])
+        end;
+      kill ->
+        case rpc:call(Target, erlang, exit, [Pid, kill], 5000) of
+          true -> io:format("RESULT\tb2s=~n");
+          _ -> io:format("ERROR\tCould not terminate process~n")
+        end
+    end
+  catch _:_ -> io:format("ERROR\tInvalid process identifier~n") end,
+  io:format("END~n")
+end,
 Loop = fun Refresh(Self) ->
   case io:get_line("") of
     eof -> ok;
@@ -77,7 +98,7 @@ case net_adm:ping(Target) of
               Name = proplists:get_value(registered_name, Info, ''),
               NameText = case Name of N when is_atom(N) -> atom_to_list(N); _ -> "" end,
               Encoded = base64:encode(unicode:characters_to_binary(NameText)),
-              io:format("P\t~s\t~s\t~B\t~B\t~B~n", [pid_to_list(Pid), Encoded, proplists:get_value(memory, Info, 0), proplists:get_value(message_queue_len, Info, 0), proplists:get_value(reductions, Info, 0)]);
+              io:format("P\t~s\t~s\t~B\t~B\t~B\t~s~n", [pid_to_list(Pid), Encoded, proplists:get_value(memory, Info, 0), proplists:get_value(message_queue_len, Info, 0), proplists:get_value(reductions, Info, 0), base64:encode(term_to_binary(Pid))]);
             _ -> ok
           end
         end, Ps);
@@ -86,6 +107,8 @@ case net_adm:ping(Target) of
 end,
 io:format("END~n"),
 Self(Self);
+    "inspect\t" ++ Token -> Action(inspect, Token), Self(Self);
+    "kill\t" ++ Token -> Action(kill, Token), Self(Self);
     _ -> Self(Self)
   end
 end,

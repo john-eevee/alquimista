@@ -10,7 +10,8 @@ data class ObservedProcess(
     val name: String,
     val memoryBytes: Long,
     val queueLength: Long,
-    val reductions: Long
+    val reductions: Long,
+    val token: String = ""
 )
 
 data class ObservedTreeNode(val id: String, val parentId: String, val label: String, val pid: String, val kind: String)
@@ -47,13 +48,14 @@ data class ObserverSnapshot(
             require(fields.size == 5) { "Invalid Observer response" }
             val processes = lines.filter { it.startsWith("P\t") }.map { line ->
                 val row = line.split('\t')
-                require(row.size == 6) { "Invalid Observer process response" }
+                require(row.size == 6 || row.size == 7) { "Invalid Observer process response" }
                 ObservedProcess(
                     row[1],
                     String(Base64.getDecoder().decode(row[2]), Charsets.UTF_8),
                     row[3].toLong(),
                     row[4].toLong(),
-                    row[5].toLong()
+                    row[5].toLong(),
+                    row.getOrElse(6) { "" }
                 )
             }
             val metrics = lines.firstOrNull { it.startsWith("M\t") }?.let { line ->
@@ -135,10 +137,27 @@ class ObserverSession internal constructor(private val process: Process, node: S
     }
 
     @Synchronized
-    fun snapshot(): ObserverSnapshot {
+    fun snapshot(): ObserverSnapshot = ObserverSnapshot.parse(request("refresh"))
+
+    @Synchronized
+    fun inspectProcess(process: ObservedProcess): String = action("inspect", process)
+
+    @Synchronized
+    fun killProcess(process: ObservedProcess) { action("kill", process) }
+
+    private fun action(operation: String, process: ObservedProcess): String {
+        require(process.token.matches(Regex("[A-Za-z0-9+/=]+"))) { "Invalid process identifier" }
+        val response = request("$operation\t${process.token}")
+        val error = response.lineSequence().firstOrNull { it.startsWith("ERROR\t") }
+        if (error != null) error(error.substringAfter('\t'))
+        val result = response.lineSequence().firstOrNull { it.startsWith("RESULT\t") } ?: error("Invalid Observer response")
+        return String(Base64.getDecoder().decode(result.substringAfter('\t')), Charsets.UTF_8)
+    }
+
+    private fun request(command: String): String {
         check(!closed.get() && process.isAlive) { "Observer session is closed" }
         try {
-            writer.write("refresh\n"); writer.flush()
+            writer.write("$command\n"); writer.flush()
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30)
             val response = StringBuilder()
             while (true) {
@@ -150,7 +169,7 @@ class ObserverSession internal constructor(private val process: Process, node: S
                 if (line == END_OF_STREAM) {
                     close(); error("Observer process exited: ${response.toString().takeLast(1000)}")
                 }
-                if (line == "END") return ObserverSnapshot.parse(response.toString())
+                if (line == "END") return response.toString()
                 response.append(line).append('\n')
             }
         } catch (error: java.io.IOException) {

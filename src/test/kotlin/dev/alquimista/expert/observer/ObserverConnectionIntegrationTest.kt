@@ -14,7 +14,7 @@ class ObserverConnectionIntegrationTest {
         val executable = erl ?: return
         val node = "alquimista_test_${UUID.randomUUID().toString().replace("-", "").take(10)}"
         val cookie = "alquimista_test_cookie"
-        fun startTarget() = ProcessBuilder(executable.absolutePath, "+S", "2:2", "-sname", node, "-setcookie", cookie, "-noshell", "-eval", "timer:sleep(infinity).")
+        fun startTarget() = ProcessBuilder(executable.absolutePath, "+S", "2:2", "-sname", node, "-setcookie", cookie, "-noshell", "-eval", "register(alquimista_observer_fixture, spawn(fun() -> receive stop -> ok end end)), timer:sleep(infinity).")
             .redirectErrorStream(true).start()
         var target = startTarget()
         try {
@@ -43,6 +43,10 @@ class ObserverConnectionIntegrationTest {
                 val first = session.snapshot()
                 val second = session.snapshot()
                 assertEquals(first.node, second.node)
+                val fixture = first.processes.single { it.name == "alquimista_observer_fixture" }
+                assertTrue(session.inspectProcess(fixture).contains("registered_name"))
+                session.killProcess(fixture)
+                assertFalse(session.snapshot().processes.any { it.name == "alquimista_observer_fixture" })
                 assertEquals(processId, session.processId)
                 assertTrue(session.isAlive)
                 target.destroyForcibly()

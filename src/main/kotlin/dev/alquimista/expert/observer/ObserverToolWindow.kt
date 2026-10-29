@@ -50,6 +50,8 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         }
     }
     private var job: ScheduledFuture<*>? = null
+    private var processes: List<ObservedProcess> = emptyList()
+    private lateinit var processTable: JTable
     private val charts = ObserverCharts()
     private val treeRoot = javax.swing.tree.DefaultMutableTreeNode("Applications")
     private val treeModel = javax.swing.tree.DefaultTreeModel(treeRoot)
@@ -72,9 +74,19 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         val top =
             JPanel(BorderLayout()).apply { add(controls, BorderLayout.NORTH); add(information, BorderLayout.SOUTH) }
         val table = JTable(model).apply { autoCreateRowSorter = true }
+        processTable = table
+        val inspect = JButton("Process info").apply { addActionListener { selectedProcess()?.let { processAction(it, false) } } }
+        val kill = JButton("Kill process").apply { addActionListener { selectedProcess()?.let { processAction(it, true) } } }
+        table.addMouseListener(object : java.awt.event.MouseAdapter() {
+            override fun mouseClicked(event: java.awt.event.MouseEvent) { if (event.clickCount == 2) selectedProcess()?.let { processAction(it, false) } }
+        })
+        val processPanel = JPanel(BorderLayout()).apply {
+            add(JScrollPane(table), BorderLayout.CENTER)
+            add(JPanel(FlowLayout(FlowLayout.LEADING)).apply { add(inspect); add(kill) }, BorderLayout.SOUTH)
+        }
         panel.add(top, BorderLayout.NORTH)
         val etsTable = JTable(tableModel).apply { autoCreateRowSorter = true }
-        val tabs = JTabbedPane().apply { addTab("Processes", JScrollPane(table)); addTab("Load charts", charts); addTab("ETS", JScrollPane(etsTable)); addTab("Applications", JScrollPane(tree)) }
+        val tabs = JTabbedPane().apply { addTab("Processes", processPanel); addTab("Load charts", charts); addTab("ETS", JScrollPane(etsTable)); addTab("Applications", JScrollPane(tree)) }
         panel.add(tabs, BorderLayout.CENTER)
         disconnect.isEnabled = false
         connect.addActionListener { start() }
@@ -137,6 +149,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
                         tableModel.rowCount = 0
                         snapshot.tables.forEach { tableModel.addRow(arrayOf<Any>(it.name, it.id, it.owner, it.size, it.memoryWords, it.protection, it.type)) }
                         model.rowCount = 0
+                        processes = snapshot.processes
                         snapshot.processes.forEach {
                             model.addRow(
                                 arrayOf<Any>(
@@ -166,6 +179,35 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         }, 0, 5, TimeUnit.SECONDS)
     }
 
+    private fun selectedProcess(): ObservedProcess? {
+        val row = processTable.selectedRow
+        if (row < 0) { status.text = "Select a process first."; return null }
+        return processes.getOrNull(processTable.convertRowIndexToModel(row))
+    }
+
+    private fun processAction(process: ObservedProcess, kill: Boolean) {
+        if (kill && JOptionPane.showConfirmDialog(panel, "Kill ${process.pid} (${process.name})? This can stop or restart application components.", "Kill process", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION) return
+        val active = synchronized(sessionLock) { session } ?: run { status.text = "Connect to a node first."; return }
+        val current = generation
+        executor.execute {
+            try {
+                val information = if (kill) { active.killProcess(process); "Termination signal sent to ${process.pid}." } else active.inspectProcess(process)
+                ApplicationManager.getApplication().invokeLater {
+                    if (current == generation && !project.isDisposed) {
+                        if (kill) status.text = information else {
+                            val text = JTextArea(information, 25, 90).apply { isEditable = false; caretPosition = 0 }
+                            JOptionPane.showMessageDialog(panel, JScrollPane(text), "Process ${process.pid}", JOptionPane.INFORMATION_MESSAGE)
+                        }
+                    }
+                }
+            } catch (error: Exception) {
+                ApplicationManager.getApplication().invokeLater {
+                    if (current == generation && !project.isDisposed) status.text = "Process action failed: ${error.message}"
+                }
+            }
+        }
+    }
+
     private fun stop() {
         generation++
         job?.cancel(true); job = null
@@ -173,7 +215,7 @@ private class ObserverToolWindow(private val project: Project) : Disposable {
         connect.isEnabled = true; disconnect.isEnabled = false
         node.isEnabled = true; cookie.isEnabled = true; longNames.isEnabled = true
         cookie.text = ""
-        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; treeRoot.removeAllChildren(); treeModel.reload(); charts.clear()
+        status.text = "Disconnected."; summary.text = " "; model.rowCount = 0; tableModel.rowCount = 0; processes = emptyList(); treeRoot.removeAllChildren(); treeModel.reload(); charts.clear()
     }
 
     override fun dispose() {
