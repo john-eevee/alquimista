@@ -14,6 +14,8 @@ data class ObservedProcess(
     val token: String = ""
 )
 
+data class ObservedSocket(val id: String, val fd: String, val owner: String, val domain: String, val type: String, val protocol: String, val readState: String, val writeState: String, val details: String)
+
 data class ObservedPort(val id: String, val name: String, val owner: String, val inputBytes: Long, val outputBytes: Long, val queueBytes: Long, val details: String)
 
 data class SchedulerCounters(val id: Int, val active: Long, val total: Long)
@@ -43,6 +45,7 @@ data class ObserverSnapshot(
     val supervision: List<ObservedTreeNode> = emptyList(),
     val schedulers: List<SchedulerCounters> = emptyList(),
     val ports: List<ObservedPort> = emptyList(),
+    val sockets: List<ObservedSocket> = emptyList(),
 ) {
     companion object {
         fun parse(output: String): ObserverSnapshot {
@@ -90,7 +93,12 @@ data class ObserverSnapshot(
                 require(row.size == 8) { "Invalid port response" }
                 ObservedPort(decode(row[1]), decode(row[2]), decode(row[3]), row[4].toLong(), row[5].toLong(), row[6].toLong(), decode(row[7]))
             }
-            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables, supervision, schedulers, ports)
+            val sockets = lines.filter { it.startsWith("K\t") }.map { line ->
+                val row = line.split('\t')
+                require(row.size == 10) { "Invalid socket response" }
+                ObservedSocket(decode(row[1]), decode(row[2]), decode(row[3]), decode(row[4]), decode(row[5]), decode(row[6]), decode(row[7]), decode(row[8]), decode(row[9]))
+            }
+            return ObserverSnapshot(fields[1], fields[2], fields[3].toLong(), fields[4].toInt(), processes, metrics, tables, supervision, schedulers, ports, sockets)
         }
     }
 }

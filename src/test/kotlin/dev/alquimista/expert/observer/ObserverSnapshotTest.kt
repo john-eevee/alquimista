@@ -119,4 +119,16 @@ class ObserverSnapshotTest {
         assertEquals("details", port.details)
     }
 
+    @Test fun `parses socket information`() {
+        val snapshot = ObserverSnapshot.parse("OK\tnode@host\t29\t4096\t3\nK\tc29ja2V0\tMTc=\tPDAuMS4wPg==\taW5ldA==\tc3RyZWFt\tdGNw\tW10=\tW10=\tZGV0YWlscw==\n")
+        val socket = snapshot.sockets.single()
+        assertEquals("socket", socket.id)
+        assertEquals("17", socket.fd)
+        assertEquals("<0.1.0>", socket.owner)
+        assertEquals("inet", socket.domain)
+        assertEquals("stream", socket.type)
+        assertEquals("tcp", socket.protocol)
+        assertEquals("details", socket.details)
+    }
+
 }

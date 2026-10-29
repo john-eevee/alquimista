@@ -14,7 +14,7 @@ class ObserverConnectionIntegrationTest {
         val executable = erl ?: return
         val node = "alquimista_test_${UUID.randomUUID().toString().replace("-", "").take(10)}"
         val cookie = "alquimista_test_cookie"
-        fun startTarget() = ProcessBuilder(executable.absolutePath, "+S", "2:2", "-sname", node, "-setcookie", cookie, "-noshell", "-eval", "register(alquimista_observer_fixture, spawn(fun() -> receive stop -> ok end end)), ets:new(alquimista_test_table, [named_table, public]), ets:insert(alquimista_test_table, {example, 42}), ets:insert(alquimista_test_table, [{N,N} || N <- lists:seq(1,50)]), ets:new(alquimista_private_table, [named_table, private]), timer:sleep(infinity).")
+        fun startTarget() = ProcessBuilder(executable.absolutePath, "+S", "2:2", "-sname", node, "-setcookie", cookie, "-noshell", "-eval", "register(alquimista_observer_fixture, spawn(fun() -> receive stop -> ok end end)), ets:new(alquimista_test_table, [named_table, public]), ets:insert(alquimista_test_table, {example, 42}), ets:insert(alquimista_test_table, [{N,N} || N <- lists:seq(1,50)]), ets:new(alquimista_private_table, [named_table, private]), {ok, _Socket} = socket:open(inet, stream, tcp), timer:sleep(infinity).")
             .redirectErrorStream(true).start()
         var target = startTarget()
         try {
@@ -37,6 +37,7 @@ class ObserverConnectionIntegrationTest {
             assertTrue("Expected real ETS memory metrics", initial.metrics.etsMemory > 0)
             assertTrue("Expected real ETS tables", initial.tables.isNotEmpty())
             assertTrue("Expected real ports", initial.ports.isNotEmpty())
+            assertTrue("Expected the test socket", initial.sockets.any { it.domain == "inet" && it.type == "stream" && it.protocol == "tcp" })
             assertTrue("Expected applications and supervisors", initial.supervision.any { it.kind == "supervisor" })
             val session = ObserverConnection.open(listOf(executable.absolutePath), "$node@$host", cookie, false)
             val processId = session.processId

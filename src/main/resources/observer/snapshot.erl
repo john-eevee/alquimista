@@ -172,6 +172,13 @@ case net_adm:ping(Target) of
           end, PortList);
           _ -> ok
         end,
+        Sockets = rpc:call(Target, observer_backend, get_socket_list, [], 5000),
+        case Sockets of
+          SocketList when is_list(SocketList) -> lists:foreach(fun(SocketInfo) when is_map(SocketInfo) ->
+            io:format("K\t~s\t~s\t~s\t~s\t~s\t~s\t~s\t~s\t~s~n", [B64(unicode:characters_to_binary(maps:get(id_str, SocketInfo, ""))), Encode(maps:get(fd, SocketInfo, undefined)), Encode(maps:get(owner, SocketInfo, undefined)), Encode(maps:get(domain, SocketInfo, undefined)), Encode(maps:get(type, SocketInfo, undefined)), Encode(maps:get(protocol, SocketInfo, undefined)), Encode(maps:get(rstates, SocketInfo, [])), Encode(maps:get(wstates, SocketInfo, [])), B64(unicode:characters_to_binary(io_lib:format("~P", [SocketInfo, 20])))]);
+          (_) -> ok end, SocketList);
+          _ -> ok
+        end,
         Tables = rpc:call(Target, ets, all, [], 5000),
         case Tables of
           Ts when is_list(Ts) -> lists:foreach(fun(Tid) ->
