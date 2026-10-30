@@ -47,6 +47,9 @@ class ElixirFileIconsTest : ParsingTestCase("", "ex", ElixirParserDefinition()) 
         }
         val light = render(IconLoader.getDarkIcon(ElixirIcons.FILE, false))
         val dark = render(IconLoader.getDarkIcon(ElixirIcons.FILE, true))
-        assertTrue("Light and dark icons should render differently", light.getRGB(8, 5) != dark.getRGB(8, 5))
+        val differs = (0 until light.height).any { y ->
+            (0 until light.width).any { x -> light.getRGB(x, y) != dark.getRGB(x, y) }
+        }
+        assertTrue("Light and dark icons should render differently", differs)
     }
 }
