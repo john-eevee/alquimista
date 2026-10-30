@@ -38,15 +38,15 @@ class ElixirFileIconsTest : ParsingTestCase("", "ex", ElixirParserDefinition()) 
         })
     }
 
-    fun testPlatformLoadsDifferentLightAndDarkVariants() {
+    fun testLightAndDarkResourcesRenderDifferently() {
         fun render(icon: Icon): BufferedImage {
             val image = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
             val graphics = image.createGraphics()
             try { icon.paintIcon(null, graphics, 0, 0) } finally { graphics.dispose() }
             return image
         }
-        val light = render(IconLoader.getDarkIcon(ElixirIcons.FILE, false))
-        val dark = render(IconLoader.getDarkIcon(ElixirIcons.FILE, true))
+        val light = render(IconLoader.getIcon("/icons/elixir.svg", ElixirIcons::class.java))
+        val dark = render(IconLoader.getIcon("/icons/elixir_dark.svg", ElixirIcons::class.java))
         val differs = (0 until light.height).any { y ->
             (0 until light.width).any { x -> light.getRGB(x, y) != dark.getRGB(x, y) }
         }
