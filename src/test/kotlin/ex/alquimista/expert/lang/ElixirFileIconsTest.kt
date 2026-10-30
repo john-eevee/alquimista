@@ -2,9 +2,6 @@ package ex.alquimista.expert.lang
 
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.ParsingTestCase
-import com.intellij.openapi.util.IconLoader
-import java.awt.image.BufferedImage
-import javax.swing.Icon
 import javax.xml.parsers.DocumentBuilderFactory
 
 class ElixirFileIconsTest : ParsingTestCase("", "ex", ElixirParserDefinition()) {
@@ -38,18 +35,16 @@ class ElixirFileIconsTest : ParsingTestCase("", "ex", ElixirParserDefinition()) 
         })
     }
 
-    fun testLightAndDarkResourcesRenderDifferently() {
-        fun render(icon: Icon): BufferedImage {
-            val image = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
-            val graphics = image.createGraphics()
-            try { icon.paintIcon(null, graphics, 0, 0) } finally { graphics.dispose() }
-            return image
+    fun testLightAndDarkIconResourcesUseDifferentColors() {
+        fun fills(name: String): List<String> {
+            val resource = javaClass.getResourceAsStream("/icons/$name")!!
+            val paths = resource.use {
+                DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(it).getElementsByTagName("path")
+            }
+            return (0 until paths.length).map {
+                (paths.item(it) as org.w3c.dom.Element).getAttribute("fill")
+            }
         }
-        val light = render(IconLoader.getIcon("/icons/elixir.svg", ElixirIcons::class.java))
-        val dark = render(IconLoader.getIcon("/icons/elixir_dark.svg", ElixirIcons::class.java))
-        val differs = (0 until light.height).any { y ->
-            (0 until light.width).any { x -> light.getRGB(x, y) != dark.getRGB(x, y) }
-        }
-        assertTrue("Light and dark icons should render differently", differs)
+        assertFalse("Light and dark icon resources should use different colors", fills("elixir.svg") == fills("elixir_dark.svg"))
     }
 }
