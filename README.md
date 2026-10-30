@@ -56,6 +56,12 @@ Credo is disabled by default. Add it to the Mix project's dependencies, run `mix
 
 Alquimista has a new plugin ID. Uninstall the previous version before installing it to avoid loading both plugins. Expert and Credo settings, saved ExUnit run configurations, and custom Elixir and HEEx colors use new identifiers and need to be configured again.
 
+## Installing from GitHub Releases
+
+Download the ZIP from [GitHub Releases](https://github.com/john-eevee/alquimista/releases/latest). In your IntelliJ-based IDE, open **Settings | Plugins**, select the gear menu, choose **Install Plugin from Disk...**, and select the downloaded ZIP.
+
+Releases are built from version tags in the `vMAJOR.MINOR.PATCH` format, optionally with a prerelease suffix, such as `v1.2.3` or `v0.0.1-SNAPSHOT`.
+
 ## Development
 
 Use the Gradle wrapper to build and test the plugin:

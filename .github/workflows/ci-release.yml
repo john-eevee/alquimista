@@ -1,0 +1,82 @@
+name: CI and Release
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Read release version from tag
+        id: version
+        if: github.ref_type == 'tag'
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tags must use vMAJOR.MINOR.PATCH (optionally followed by a prerelease suffix)." >&2
+            exit 1
+          fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Run checks and verify plugin compatibility
+        env:
+          ALQUIMISTA_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if [[ -n "$ALQUIMISTA_VERSION" ]]; then
+            ./gradlew "-Pversion=$ALQUIMISTA_VERSION" check verifyPlugin
+          else
+            ./gradlew check verifyPlugin
+          fi
+
+      - name: Upload release ZIP
+        if: github.ref_type == 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: alquimista-${{ github.ref_name }}
+          path: build/distributions/alquimista-${{ steps.version.outputs.value }}.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download release ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: alquimista-${{ github.ref_name }}
+          path: dist
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Alquimista ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/*.zip
